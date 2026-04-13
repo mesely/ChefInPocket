@@ -18,12 +18,20 @@
 \usepackage{fancyhdr}
 \usepackage[hidelinks]{hyperref}
 \usepackage{parskip}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,backgrounds,fit}
 
 %% ── Colours ──────────────────────────────────────────────────────────────────
 \definecolor{accent}{RGB}{37,99,235}
 \definecolor{seccolor}{RGB}{30,30,30}
 \definecolor{muted}{RGB}{140,133,124}
 \definecolor{border}{RGB}{227,221,211}
+\definecolor{cAuth}{RGB}{219,234,254}   % blue-tint  (auth screens)
+\definecolor{cHome}{RGB}{254,243,199}   % amber-tint (home)
+\definecolor{cDisc}{RGB}{220,252,231}   % green-tint (discovery)
+\definecolor{cTool}{RGB}{243,232,255}   % purple-tint(tools)
+\definecolor{cSoc}{RGB}{207,250,254}    % cyan-tint  (social/profile)
+\definecolor{cUtil}{RGB}{254,226,226}   % red-tint   (utility)
 
 %% ── Section styling ──────────────────────────────────────────────────────────
 \titleformat{\section}{\large\bfseries\color{seccolor}}{}{0em}{}[\color{border}\titlerule]
@@ -67,6 +75,24 @@
   \end{minipage}
   \medskip}
 
+%% ── TikZ node styles ─────────────────────────────────────────────────────────
+\tikzset{
+  scrn/.style={
+    rectangle, rounded corners=4pt,
+    minimum height=0.54cm, inner sep=4pt,
+    align=center, font=\scriptsize,
+    text width=1.65cm
+  },
+  auth/.style ={scrn, draw=accent!55,  fill=cAuth},
+  homebox/.style={scrn, draw=orange!55, fill=cHome,
+                  text width=3.2cm, font=\small\bfseries},
+  disc/.style ={scrn, draw=green!55!black!60,  fill=cDisc},
+  tool/.style ={scrn, draw=purple!55, fill=cTool, font=\tiny, text width=1.4cm},
+  soc/.style  ={scrn, draw=cyan!55!black!50,   fill=cSoc},
+  util/.style ={scrn, draw=red!40,    fill=cUtil},
+  arr/.style  ={-{Stealth[length=3.2pt,width=2.2pt]}, draw=muted, thin}
+}
+
 %% ─────────────────────────────────────────────────────────────────────────────
 \begin{document}
 
@@ -75,7 +101,7 @@
 %% ══════════════════════════════════════════════════════════════
 \begin{center}
   {\large\bfseries CS310 — Mobile Application Development}\\[4pt]
-  {\large [Spring 2025--2026] Project Step 3: UI Implementation}\\[4pt]
+  {\large [Spring 2025--2026]\quad Project Step 3: UI Implementation}\\[4pt]
   {\large Group 03 · \textbf{ChefInPocket} \quad
     \href{https://github.com/mesely/ChefInPocket.git}{\textcolor{accent}{(GitHub Repository)}}}
 \end{center}
@@ -87,20 +113,20 @@
 %% ══════════════════════════════════════════════════════════════
 \section{Application Overview}
 
-\textbf{ChefInPocket} is a mobile cooking-assistant application built with Flutter that guides users from ingredient selection through step-by-step cooking, with AI support at every stage. In this step, the wireframes designed in Step~2 have been fully transformed into \textbf{20 functional Flutter screens} connected by a clean navigation system, backed by a live REST API, and polished with custom typography and a consistent design language.
+\textbf{ChefInPocket} is a mobile cooking-assistant application built with Flutter that guides users from ingredient selection through step-by-step cooking, with AI support at every stage. In this step, the wireframes from Step~2 have been transformed into \textbf{20 fully functional Flutter screens}, connected by a named-route navigation system, backed by a live REST API, and polished with custom typography and a consistent warm-neutral design language.
 
 \subsection*{Core Features Implemented}
 \begin{itemize}
-  \item \textbf{Recipe Discovery} — Browse by cuisine (6 categories) or search by name with live autocomplete suggestions.
-  \item \textbf{Ingredient-Based Matching} — Multi-select ingredient picker that calls the API and returns matching recipes instantly.
-  \item \textbf{Serving Scale} — Stepper widget recalculates all ingredient amounts in real time via API.
-  \item \textbf{AI Chef Chat} — Full-screen conversational assistant with recipe context, left/right chat bubbles, and scroll-to-latest behavior.
+  \item \textbf{Recipe Discovery} — Browse by cuisine (6 categories with emoji flags) or search by name with live autocomplete overlay.
+  \item \textbf{Ingredient-Based Matching} — Multi-select ingredient picker calls the API and returns matching recipes instantly.
+  \item \textbf{Serving Scale} — Stepper widget recalculates all ingredient quantities in real time via API.
+  \item \textbf{AI Chef Chat} — Full-screen conversational assistant with recipe context badge, left/right chat bubbles, and auto-scroll.
   \item \textbf{Grocery List} — Item cards with dynamic deletion; quick-add bottom sheet with 12 ingredient chips.
-  \item \textbf{Community \& Social} — Feed with Q\&A posting, bookmarking, and user profile browsing.
+  \item \textbf{Community \& Social} — Feed with Q\&A posting, bookmarking, and user-profile browsing.
   \item \textbf{Saved Recipes} — Bookmarked recipes stored via API, removable with a single tap.
   \item \textbf{My Recipes / Add Recipe} — Users can publish and view their own community posts.
-  \item \textbf{Customize Ingredients} — Replace or remove elements from a recipe without breaking proportions.
-  \item \textbf{Cooking Steps} — All steps displayed as numbered cards; Mark as Done navigates back to Home.
+  \item \textbf{Customize Ingredients} — Replace or remove elements without breaking recipe proportions.
+  \item \textbf{Cooking Steps} — All steps shown as numbered cards; \emph{Mark as Done} dialog returns to Home.
 \end{itemize}
 
 %% ══════════════════════════════════════════════════════════════
@@ -109,43 +135,136 @@
 \begin{center}
 \begin{tabularx}{0.97\textwidth}{llX}
 \toprule
-\textbf{Team Member} & \textbf{Student ID} & \textbf{Screens Implemented} \\
+\textbf{Team Member} & \textbf{ID} & \textbf{Screens Implemented} \\
 \midrule
-Emir Keskin        & 31020 & Onboarding, Browse Cuisine, Recipe Detail, Ingredient Picker \\
-Cem Özkul          & 34183 & Login, Register, Recipe Results, Add Recipe \\
-Nilsu Saraçlar     & 34210 & Home, Serving Scale, Saved Recipes \\
+Emir Keskin          & 31020 & Onboarding, Browse Cuisine, Recipe Detail, Ingredient Picker \\
+Cem Özkul            & 34183 & Login, Register, Recipe Results, Add Recipe \\
+Nilsu Saraçlar       & 34210 & Home Screen, Serving Scale, Saved Recipes \\
 Mehmet Selman Yılmaz & 31158 & AI Chat, Cooking Steps, My Recipes, Ask Q\&A \\
-Doğa Atılğan       & 34450 & Grocery List, Community, Customize Ingredients \\
-Bora Demirkol      & 32361 & Profile, User Profile, Navigation Architecture \& Routing \\
+Doğa Atılğan         & 34450 & Grocery List, Community, Customize Ingredients \\
+Bora Demirkol        & 32361 & Profile, User Profile, Navigation Architecture \& Routing \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-All members contributed equally to integration, cross-screen consistency, and the overall app structure.
+All members contributed equally to cross-screen integration, shared widget design, and overall app consistency.
 
 %% ══════════════════════════════════════════════════════════════
 \newpage
 \section{Navigation Flow}
 
-All navigation in ChefInPocket uses Flutter's named route system. The \texttt{initialRoute} is set to \texttt{AppRoutes.onboarding} in \texttt{MaterialApp}. The application flow is structured into five logical branches:
+\subsection*{App Flow Diagram}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.88, transform shape]
+
+%% ── Auth row ────────────────────────────────────────────────────────────────
+\node[auth]    (onb)  at (0,    0)    {Onboarding};
+\node[auth]    (log)  at (-2.2, -1.3) {Login};
+\node[auth]    (reg)  at ( 2.2, -1.3) {Register};
+
+%% ── Home ────────────────────────────────────────────────────────────────────
+\node[homebox] (home) at (0, -2.7)    {Home\\[-1pt]\tiny(Bottom Navigation)};
+
+%% ── Bottom-nav tabs ─────────────────────────────────────────────────────────
+\node[disc] (browse) at (-6.2, -4.2) {Browse\\Cuisine};
+\node[soc]  (comm)   at (-2.1, -4.2) {Community};
+\node[util] (groc)   at ( 2.1, -4.2) {Grocery\\List};
+\node[soc]  (prof)   at ( 6.2, -4.2) {Profile};
+
+%% ── Discovery branch ────────────────────────────────────────────────────────
+\node[disc] (ingp)   at (-6.2, -5.7) {Ingredient\\Picker};
+\node[disc] (res)    at (-6.2, -7.1) {Recipe\\Results};
+\node[disc] (det)    at (-6.2, -8.5) {Recipe\\Detail};
+
+%% ── Tool branch (below Recipe Detail) ───────────────────────────────────────
+\node[tool] (ai)   at (-9.0, -10.0) {AI\\Chat};
+\node[tool] (sc)   at (-7.1, -10.0) {Serving\\Scale};
+\node[tool] (cu)   at (-5.2, -10.0) {Customize\\Ingr.};
+\node[tool] (ck)   at (-3.3, -10.0) {Cooking\\Steps};
+
+%% ── Community branch ────────────────────────────────────────────────────────
+\node[soc]  (qa)    at (-3.0, -5.7) {Ask Q\&A};
+\node[soc]  (up)    at (-1.2, -5.7) {User\\Profile};
+
+%% ── Grocery branch ──────────────────────────────────────────────────────────
+\node[util] (gi)    at ( 2.1, -5.7) {Items\\+ Delete};
+
+%% ── Profile branch ──────────────────────────────────────────────────────────
+\node[soc]  (svd)   at ( 5.0, -5.7) {Saved\\Recipes};
+\node[soc]  (myr)   at ( 7.4, -5.7) {My\\Recipes};
+
+%% ── Auth arrows ─────────────────────────────────────────────────────────────
+\draw[arr] (onb.south west) -- (log.north east);
+\draw[arr] (onb.south east) -- (reg.north west);
+\draw[arr] (log.south east) -- (home.north west);
+\draw[arr] (reg.south west) -- (home.north east);
+
+%% ── Home → tabs (bus bar — arrows exit cleanly from below Home) ─────────────
+\draw[draw=muted, thin] (home.south) -- (0, -3.35);
+\draw[draw=muted, thin] (-6.2, -3.35) -- (6.2, -3.35);
+\draw[arr] (-6.2, -3.35) -- (browse.north);
+\draw[arr] (-2.1, -3.35) -- (comm.north);
+\draw[arr] ( 2.1, -3.35) -- (groc.north);
+\draw[arr] ( 6.2, -3.35) -- (prof.north);
+
+%% ── Discovery chain ─────────────────────────────────────────────────────────
+\draw[arr] (browse.south) -- (ingp.north);
+\draw[arr] (ingp.south)   -- (res.north);
+\draw[arr] (res.south)    -- (det.north);
+
+%% ── Recipe Detail → tools (bus bar — spreads cleanly to all 4 tools) ────────
+\draw[draw=muted, thin] (det.south) -- (-6.2, -9.25);
+\draw[draw=muted, thin] (-9.0, -9.25) -- (-3.3, -9.25);
+\draw[arr] (-9.0, -9.25) -- (ai.north);
+\draw[arr] (-7.1, -9.25) -- (sc.north);
+\draw[arr] (-5.2, -9.25) -- (cu.north);
+\draw[arr] (-3.3, -9.25) -- (ck.north);
+
+%% ── Community branches ───────────────────────────────────────────────────────
+\draw[arr] (comm.south) -- (qa.north);
+\draw[arr] (comm.south) to[out=280,in=90] (up.north);
+
+%% ── Grocery branch ───────────────────────────────────────────────────────────
+\draw[arr] (groc.south) -- (gi.north);
+
+%% ── Profile branches ─────────────────────────────────────────────────────────
+\draw[arr] (prof.south) to[out=260,in=90] (svd.north);
+\draw[arr] (prof.south) to[out=280,in=90] (myr.north);
+
+%% ── Legend ───────────────────────────────────────────────────────────────────
+\node[auth, text width=1.3cm, font=\tiny] at (-8.5,-4.2)  {Auth};
+\node[homebox, text width=1.3cm, font=\tiny] at (-8.5,-4.95) {Home};
+\node[disc, text width=1.3cm, font=\tiny] at (-8.5,-5.7)  {Discovery};
+\node[tool, text width=1.3cm]             at (-8.5,-6.45) {Tools};
+\node[soc,  text width=1.3cm, font=\tiny] at (-8.5,-7.2)  {Social};
+\node[util, text width=1.3cm, font=\tiny] at (-8.5,-7.95) {Utility};
+\node[font=\tiny\bfseries\color{muted}]   at (-8.5,-3.65) {Legend};
+
+\end{tikzpicture}
+\caption{ChefInPocket — Full Navigation Flow (20 screens across 5 branches)}
+\end{figure}
+
+\subsection*{Navigation Branches}
 
 \begin{enumerate}
-  \item \textbf{Access Branch:} Onboarding $\rightarrow$ Register \emph{or} Login $\rightarrow$ Home.\\
-        Login and Register use \texttt{pushNamedAndRemoveUntil} so the back button cannot return to auth screens after sign-in.
+  \item \textbf{Access Branch:} Onboarding $\rightarrow$ Register \emph{or} Login $\rightarrow$ Home.
+        \texttt{pushNamedAndRemoveUntil} clears the auth stack so users cannot navigate back after signing in.
   \item \textbf{Discovery Branch:} Home $\rightarrow$ Browse Cuisine $\rightarrow$ Ingredient Picker $\rightarrow$ Recipe Results $\rightarrow$ Recipe Detail.
-  \item \textbf{Recipe Tool Branch:} Recipe Detail $\rightarrow$ Serving Scale \emph{/} Customize Ingredients \emph{/} Cooking Steps \emph{/} AI Chat.
-  \item \textbf{Social Branch:} Community $\rightarrow$ Ask Q\&A \emph{or} User Profile; Profile $\rightarrow$ Saved Recipes \emph{/} My Recipes \emph{/} Add Recipe.
-  \item \textbf{Main Tab Branch:} Bottom navigation bar (Home, Community, Grocery List, Profile) uses \texttt{pushReplacementNamed} to swap root screens without stacking them.
+  \item \textbf{Recipe Tool Branch:} Recipe Detail $\rightarrow$ Serving Scale / Customize Ingredients / Cooking Steps / AI Chat (all via \texttt{pushNamed} with the recipe slug as argument).
+  \item \textbf{Social Branch:} Community $\rightarrow$ Ask Q\&A or User Profile; the Q\&A form posts to the community feed and pops back.
+  \item \textbf{Profile Branch:} Profile $\rightarrow$ Saved Recipes or My Recipes; bottom navigation uses \texttt{pushReplacementNamed} to swap root tabs without stacking.
 \end{enumerate}
 
-\subsection*{Named Routes Defined in \texttt{lib/routes/app\_routes.dart}}
+\subsection*{All Named Routes — \texttt{lib/routes/app\_routes.dart}}
 
 \begin{center}
-\begin{tabularx}{0.96\textwidth}{lX}
+\begin{tabularx}{0.97\textwidth}{lX}
 \toprule
-\textbf{Route Constant} & \textbf{Path / Screen} \\
+\textbf{Constant} & \textbf{Path — Screen} \\
 \midrule
-\texttt{AppRoutes.onboarding}           & \texttt{/} — OnboardingScreen \\
+\texttt{AppRoutes.onboarding}           & \texttt{/} — OnboardingScreen (initial route) \\
 \texttt{AppRoutes.login}                & \texttt{/login} — LoginScreen \\
 \texttt{AppRoutes.register}             & \texttt{/register} — RegisterScreen \\
 \texttt{AppRoutes.home}                 & \texttt{/home} — HomeScreen \\
@@ -173,37 +292,39 @@ All navigation in ChefInPocket uses Flutter's named route system. The \texttt{in
 \newpage
 \section{Implemented Screens}
 
-%% ── 1. AUTH FLOW ─────────────────────────────────────────────────────────────
+%% ── AUTH ──────────────────────────────────────────────────────────────────────
 \subsection{Authentication Flow}
 
 \medskip\noindent
 \sblock{screenshots/onboarding.PNG}{1}{Onboarding}{%
-  Initial entry point. Displays the app logo, app name, a short tagline, and two action buttons: \emph{Get Started} (Register) and \emph{Log In}. Vertically centred layout with \texttt{SafeArea} and \texttt{SingleChildScrollView}.}
+  Initial entry point. Displays the app logo image, name, and a short tagline.
+  Two full-width buttons: \emph{Get Started} (Register) and \emph{Log In}. Vertically centred layout with \texttt{SafeArea} and \texttt{SingleChildScrollView}.}
 \hfill
-\sblock{screenshots/register.PNG}{2}{Register \textnormal{\tiny{(Input Form)}}}{%
-  Account creation form with full name, email, password, and confirm password fields. Validates all four inputs; shows inline errors and displays a success \texttt{AlertDialog} on completion.}
+\sblock{screenshots/register.PNG}{2}{Register \textnormal{\tiny(Input Form)}}{%
+  Account-creation form with full name, email, password, and confirm-password fields.
+  Validates all four inputs with inline errors; on success, shows an \texttt{AlertDialog} before pushing Home.}
 \hfill
-\sblock{screenshots/login_empty.PNG}{3}{Login \textnormal{\tiny{(Input Form)}}}{%
-  Returning-user form with email and password fields. Pre-filled with demo credentials for testing. Includes a Log~In / Register segmented toggle at the top.}
+\sblock{screenshots/login_empty.PNG}{3}{Login \textnormal{\tiny(Input Form)}}{%
+  Returning-user form with email and password fields plus a Log~In / Register toggle. Pre-filled with demo credentials for quick testing during grading.}
 
 \medskip\noindent
 \begin{minipage}[t]{0.47\textwidth}
   \centering
   \includegraphics[width=0.52\linewidth]{screenshots/login_failed.PNG}\\[4pt]
   {\small\bfseries Login — Validation Error}\\[4pt]
-  {\footnotesize Inline red error messages appear below each invalid field without leaving the screen. Both the email format and password length are validated before the API call is made.}
+  {\footnotesize Inline red error messages appear below each invalid field (\emph{``Enter a valid email''}, \emph{``Use at least 6 characters''}). The API is never called when validation fails.}
 \end{minipage}
 \hfill
 \begin{minipage}[t]{0.47\textwidth}
   \centering
   \includegraphics[width=0.52\linewidth]{screenshots/login_succesfull.PNG}\\[4pt]
   {\small\bfseries Login — Success AlertDialog}\\[4pt]
-  {\footnotesize On a successful API login, \texttt{showSuccessDialog()} renders an \texttt{AlertDialog} with title \emph{Welcome Back} and a Continue button that clears the navigation stack and pushes Home.}
+  {\footnotesize On a successful API response, \texttt{showSuccessDialog()} displays an \texttt{AlertDialog} titled \emph{Welcome Back}. The Continue button uses \texttt{pushNamedAndRemoveUntil} to clear the back stack and navigate to Home.}
 \end{minipage}
 
 \medskip
 
-%% ── 2. HOME ──────────────────────────────────────────────────────────────────
+%% ── HOME ──────────────────────────────────────────────────────────────────────
 \subsection{Home Screen}
 
 \noindent
@@ -214,53 +335,49 @@ All navigation in ChefInPocket uses Flutter's named route system. The \texttt{in
 \end{minipage}%
 \hfill
 \begin{minipage}[c]{0.62\textwidth}
-  The central hub of the application. Displays a personalised greeting using the logged-in user's first name (fetched from the API), a smart search bar with live autocomplete overlay, a \emph{Today's Pick} recipe card (deterministic daily rotation), a 3-column cuisine grid with emoji flags (Turkish, Italian, French, Healthy, Athlete, Other), and a Quick Access card list. The four-tab bottom navigation bar is always visible.
+  The central hub of the application. Displays a personalised greeting using the logged-in user's first name (fetched from the API at launch), a smart search bar with a live autocomplete overlay, a \emph{Today's Pick} recipe card (deterministic daily rotation via \texttt{daysSinceEpoch \% recipes.length}), a 3-column cuisine grid with emoji flags, and a Quick Access card list. The four-tab bottom navigation bar is always visible.
 \end{minipage}
 
 \medskip
 
-%% ── 3. DISCOVERY ────────────────────────────────────────────────────────────
+%% ── DISCOVERY ─────────────────────────────────────────────────────────────────
 \subsection{Recipe Discovery Flow}
 
 \medskip\noindent
 \sblock{screenshots/cuisine.PNG}{5}{Browse Cuisine}{%
-  Six cuisine tiles in a 2-column grid, each showing an emoji and label. Every tile offers two actions: \emph{Browse} (navigates directly to Recipe Results filtered by cuisine) and \emph{By pantry} (opens Ingredient Picker with the cuisine pre-set).}
+  Six cuisine tiles (Turkish, Italian, French, Healthy, Athlete, Other) in a 2-column grid with emoji and label. Each tile exposes two actions: \emph{Browse} (Recipe Results filtered by cuisine) and \emph{By pantry} (Ingredient Picker).}
 \hfill
 \sblock{screenshots/recipe_detail.PNG}{6}{Recipe Detail}{%
-  Hero image with overlaid circular back and bookmark buttons. Displays title, tag pills (duration, servings, category), description, and three tool cards: Adjust Servings, Customize Ingredients, and Ask Chef AI. A full-width \emph{Start Cooking} button anchors the bottom.}
+  Hero image with overlaid circular back and bookmark buttons. Shows title, duration/servings/tag pills, description, and three tool cards: Adjust Servings, Customize Ingredients, Ask Chef AI. A full-width \emph{Start Cooking} button anchors the bottom.}
 \hfill
 \sblock{screenshots/serving_scale.PNG}{7}{Serving Scale}{%
-  Stepper card with $-$ / $+$ buttons updates the serving count; the API recalculates and returns scaled ingredient quantities in real time. Each ingredient is shown as a \texttt{Card} with its name and computed amount.}
+  Stepper card ($-$ / $+$) adjusts the serving count; the API returns updated quantities in real time. Each ingredient is a \texttt{Card} with its name and scaled amount. \emph{Save \& Continue} returns to Recipe Detail.}
 
-\medskip
-
-%% ── 4. TOOLS ─────────────────────────────────────────────────────────────────
+%% ── TOOLS ─────────────────────────────────────────────────────────────────────
 \subsection{Recipe Tools}
 
 \medskip\noindent
 \sblock{screenshots/customize_ingredients.PNG}{8}{Customize Ingredients}{%
-  Grid of ingredient chips loaded from the API. Tapping a chip toggles it as a replacement target. \emph{Apply Changes} posts the selection to the backend and confirms via \texttt{AlertDialog}.}
+  Grid of ingredient chips loaded from the API. Toggling a chip marks it as a replacement target. \emph{Apply Changes} posts selections to the backend and confirms with an \texttt{AlertDialog}.}
 \hfill
 \sblock{screenshots/cooking_steps.PNG}{9}{Cooking Steps}{%
-  All recipe steps rendered as numbered cards (coloured circle + white card). A single \emph{Mark as Done} button at the bottom triggers a completion \texttt{AlertDialog} and returns the user to Home.}
+  All recipe steps rendered as numbered cards (coloured circle + white card body). A \emph{Mark as Done} button at the bottom triggers a completion \texttt{AlertDialog} and returns to Home via \texttt{pushNamedAndRemoveUntil}.}
 \hfill
 \sblock{screenshots/ai.PNG}{10}{AI Chef Chat}{%
-  Full-screen custom \texttt{Scaffold} (no shared \texttt{ChefPage} wrapper). Recipe context badge at the top. Chef replies on the left (white bubble), user messages on the right (dark bubble). \texttt{ScrollController} auto-scrolls to the latest message.}
+  Full-screen custom \texttt{Scaffold} (no shared wrapper). Recipe context badge at top. Chef replies appear on the left (white bubble), user messages on the right (dark bubble). \texttt{ScrollController} auto-scrolls to the latest message.}
 
-\medskip
-
-%% ── 5. UTILITY ───────────────────────────────────────────────────────────────
+%% ── UTILITY / SOCIAL ──────────────────────────────────────────────────────────
 \subsection{Utility and Social Screens}
 
 \medskip\noindent
 \sblock{screenshots/grocery_list.PNG}{11}{Grocery List}{%
-  Missing ingredients shown as \texttt{Card} widgets in a live list. Each card has a delete \texttt{IconButton} that calls the API and removes the item from the local \texttt{\_items} list with \texttt{setState}. An \emph{Add Items} button opens a bottom sheet with 12 quick-add chips and a free-text field.}
+  Items shown as \texttt{Card} widgets in a live list. Each card has a delete \texttt{IconButton} that calls the API and removes the entry from \texttt{\_items} using \texttt{setState}. An \emph{Add Items} button opens a bottom sheet with 12 quick-add chips.}
 \hfill
 \sblock{screenshots/saved_recipes.PNG}{12}{Saved Recipes}{%
-  Bookmarked recipe cards fetched from the API. Each card shows the author, cover image, title, and description. Tapping the bookmark icon calls \texttt{removeSavedRecipe()} and splices the item out of the list in real time.}
+  Bookmarked recipe cards fetched from the API. Each card shows the cover image, title, description, and a bookmark icon. Tapping the icon calls \texttt{removeSavedRecipe()} and splices the entry from the list in real time.}
 \hfill
 \sblock{screenshots/community.PNG}{13}{Community}{%
-  Social feed of community posts loaded via \texttt{FutureBuilder}. Includes a Q\&A button (navigates to AskQAScreen) and a FAB for posting. Tapping an author avatar opens UserProfileScreen via named route.}
+  Social feed loaded via \texttt{FutureBuilder}. Includes a Q\&A button (navigates to AskQAScreen) and a FAB for new posts. Tapping an author avatar pushes UserProfileScreen via \texttt{pushNamed}.}
 
 \medskip\noindent
 \begin{minipage}[c]{0.34\textwidth}
@@ -270,7 +387,7 @@ All navigation in ChefInPocket uses Flutter's named route system. The \texttt{in
 \end{minipage}%
 \hfill
 \begin{minipage}[c]{0.62\textwidth}
-  Personal account hub loaded from the API using the stored login email. Displays stat tiles (saved recipes, published recipes, cooked meals) and a menu list (Saved Recipes, My Recipes, Post a Recipe, Adjust Servings, Customize Ingredients). A \emph{Log Out} button clears the session and returns to Onboarding.
+  Personal account hub loaded from the API using the stored login email. Displays three stat tiles (saved recipes, published recipes, cooked meals) and a \texttt{ProfileMenuTile} list (Saved Recipes, My Recipes, Post a Recipe, Adjust Servings, Customize Ingredients). A \emph{Log Out} button resets the session and returns to Onboarding via \texttt{pushNamedAndRemoveUntil}.
 \end{minipage}
 
 %% ══════════════════════════════════════════════════════════════
@@ -279,102 +396,103 @@ All navigation in ChefInPocket uses Flutter's named route system. The \texttt{in
 
 \subsection{Named Routes}
 
-All navigation is implemented through Flutter's named route system defined in \texttt{lib/routes/app\_routes.dart}. Every route string is a \texttt{static const} field of the \texttt{AppRoutes} class, preventing typos and enabling IDE navigation. The \texttt{MaterialApp} in \texttt{lib/app.dart} declares all 20 routes in its \texttt{routes} map and sets \texttt{initialRoute: AppRoutes.onboarding}.
+All navigation uses Flutter's named-route system. The file \texttt{lib/routes/app\_routes.dart} defines a single \texttt{AppRoutes} class whose every member is a \texttt{static const String}. The \texttt{MaterialApp} in \texttt{lib/app.dart} maps all 20 constants to their screen widget constructors and sets \texttt{initialRoute: AppRoutes.onboarding}.
 
-Navigation calls used throughout the app:
+Three navigation call patterns are used:
 \begin{itemize}
-  \item \texttt{Navigator.pushNamed(context, AppRoutes.recipeDetail, arguments: slug)} — pushes onto the stack and passes data via the \texttt{arguments} parameter. Receiving screens read it with \texttt{ModalRoute.of(context)?.settings.arguments}.
-  \item \texttt{Navigator.pushReplacementNamed} — used by the bottom navigation bar to swap root screens without growing the stack.
-  \item \texttt{Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (r) => false)} — used after successful login/register and after \emph{Mark as Done} in Cooking Steps, ensuring no stale screens remain in the back stack.
+  \item \textbf{\texttt{pushNamed}} with an \texttt{arguments} object — used for detail screens that need context (e.g.\ recipe slug, cuisine name). Arguments are retrieved via \texttt{ModalRoute.of(context)?.settings.arguments}.
+  \item \textbf{\texttt{pushReplacementNamed}} — used by the bottom navigation bar so tapping a tab replaces the current root screen without stacking it.
+  \item \textbf{\texttt{pushNamedAndRemoveUntil(\ldots, (r) => false)}} — used after login, register, logout, and \emph{Mark as Done}, ensuring no orphaned screens linger in the back stack.
 \end{itemize}
 
 \subsection{Utility Classes}
 
-Three dedicated utility files live in \texttt{lib/utils/}, each with a private constructor so they cannot be instantiated — all members are \texttt{static} or \texttt{static const}:
+Three files in \texttt{lib/utils/} centralise all static design tokens. Every class has a private constructor (\texttt{ClassName.\_()}) so it cannot be instantiated; all members are \texttt{static} or \texttt{static const}:
 
 \begin{itemize}
-  \item \textbf{\texttt{AppColors}} — Defines the full colour palette: \texttt{primary} (warm orange-brown), \texttt{primarySoft} (tinted fill), \texttt{background} (cream \texttt{\#FAF7F2}), \texttt{border}, \texttt{textPrimary}, \texttt{textMuted}. Referenced directly as \texttt{AppColors.primary} throughout every screen and widget.
-  \item \textbf{\texttt{AppTextStyles}} — Provides six \texttt{static const TextStyle} values: \texttt{display}, \texttt{title}, \texttt{subtitle}, \texttt{body}, \texttt{caption}, \texttt{sectionLabel}. Each references either the \texttt{Inter} or \texttt{Syne} font family (see Section~5.4), ensuring typographic consistency across all 20 screens.
-  \item \textbf{\texttt{AppSpacing}} — Named spacing constants: \texttt{xs = 4}, \texttt{sm = 8}, \texttt{md = 16}, \texttt{lg = 24}, \texttt{xl = 32}. Used in every \texttt{SizedBox}, \texttt{Padding}, and \texttt{EdgeInsets} across the codebase.
+  \item \textbf{\texttt{AppColors}} — Full colour palette: \texttt{primary} (warm orange-brown), \texttt{primarySoft} (tinted fill for selected states), \texttt{background} (cream \texttt{\#FAF7F2}), \texttt{border} (subtle warm grey), \texttt{textPrimary}, \texttt{textMuted}. Consumed as \texttt{AppColors.primary} throughout every screen and widget without any hardcoded hex literals.
+  \item \textbf{\texttt{AppTextStyles}} — Six \texttt{static const TextStyle} values (\texttt{display}, \texttt{title}, \texttt{subtitle}, \texttt{body}, \texttt{caption}, \texttt{sectionLabel}) each binding to either the \emph{Inter} or \emph{Syne} font family defined in \texttt{pubspec.yaml}.
+  \item \textbf{\texttt{AppSpacing}} — Five named double constants: \texttt{xs=4}, \texttt{sm=8}, \texttt{md=16}, \texttt{lg=24}, \texttt{xl=32}. Every \texttt{SizedBox}, \texttt{Padding}, and \texttt{EdgeInsets} in the project uses these constants instead of magic numbers.
 \end{itemize}
 
 \subsection{Asset and Network Images}
 
-\textbf{Asset images} are stored in \texttt{assets/images/} and declared in \texttt{pubspec.yaml} under \texttt{flutter.assets}:
+\textbf{Asset images} are stored in \texttt{assets/images/} and declared in \texttt{pubspec.yaml}:
 \begin{itemize}
-  \item \texttt{onboarding-meal.jpg} — food collage shown on the Onboarding screen.
-  \item \texttt{recipe-hero.jpg} — fallback hero used when a recipe has no remote image.
-  \item \texttt{community-bowl.jpg} — fallback for community post cards with broken image URLs.
+  \item \texttt{onboarding-meal.jpg} — food collage rendered on the Onboarding screen via \texttt{DecorationImage(image: AssetImage(\ldots))}.
+  \item \texttt{recipe-hero.jpg} — fallback hero shown in Recipe Detail when a recipe has no remote URL.
+  \item \texttt{community-bowl.jpg} — fallback cover for community post cards that return a broken URL.
 \end{itemize}
-All three are loaded with \texttt{Image.asset('assets/images/...')} and displayed inside \texttt{ClipRRect} or \texttt{DecorationImage} widgets.
 
-\textbf{Network images} are loaded with \texttt{Image.network(url)} for recipe cover photos sourced from Unsplash (e.g.\ \texttt{https://images.unsplash.com/photo-1504674900247-...}). Every \texttt{Image.network} call includes an \texttt{errorBuilder} callback that falls back to the corresponding asset image, preventing broken-image placeholders on network errors.
+\textbf{Network images} are loaded via \texttt{Image.network(url)} for recipe cover photos sourced from Unsplash (e.g.\ \texttt{https://images.unsplash.com/photo-1504674900247-\ldots}). Every \texttt{Image.network} call includes an \texttt{errorBuilder} callback that returns the corresponding asset image, preventing broken-image placeholders on network failures.
 
 \subsection{Custom Fonts}
 
-Two external font families are bundled with the application, declared in \texttt{pubspec.yaml} under \texttt{flutter.fonts}:
+Two external font families are bundled in \texttt{assets/fonts/} and declared in \texttt{pubspec.yaml} under \texttt{flutter.fonts}:
+
 \begin{itemize}
-  \item \textbf{Inter} — loaded from \texttt{assets/fonts/Inter.ttf}. Applied to \texttt{AppTextStyles.display}, \texttt{body}, \texttt{subtitle}, \texttt{caption}, and \texttt{sectionLabel}. Used for all body-level and UI text throughout the app.
-  \item \textbf{Syne} — loaded from \texttt{assets/fonts/Syne.ttf}. Applied to \texttt{AppTextStyles.title}. Used for card titles and section headers, giving them a distinct geometric feel that matches the brand identity.
+  \item \textbf{Inter} — \texttt{assets/fonts/Inter.ttf}. Applied to \texttt{AppTextStyles.display}, \texttt{body}, \texttt{subtitle}, \texttt{caption}, and \texttt{sectionLabel}. Provides a clean, highly-legible sans-serif for all body-level UI text.
+  \item \textbf{Syne} — \texttt{assets/fonts/Syne.ttf}. Applied to \texttt{AppTextStyles.title}. Its wider geometric letterforms create visual hierarchy between section headings and body text.
 \end{itemize}
-Both fonts are referenced only through \texttt{AppTextStyles} constants, so switching the font for the entire app requires a single file change.
+
+Both fonts are only consumed through \texttt{AppTextStyles} constants, meaning the entire app's typography can be changed by editing a single file.
 
 \subsection{Card-Based List with Dynamic Item Removal}
 
-Two screens demonstrate \texttt{Card} widgets rendering model-class instances with live removal:
+Two screens satisfy this requirement using model classes defined in \texttt{lib/models/app\_models.dart}:
 
 \textbf{GroceryListScreen} (\texttt{lib/screens/grocery\_list\_screen.dart}):
 \begin{itemize}
-  \item Data model: \texttt{GroceryItem} (fields: \texttt{id}, \texttt{title}, \texttt{checked}) defined in \texttt{lib/models/app\_models.dart}.
-  \item Each item is rendered as a \texttt{Card} containing the item title and a trailing delete \texttt{IconButton}.
-  \item Pressing delete calls \texttt{ApiService.instance.removeGroceryItem(item.id)}, then updates the local \texttt{\_items} list inside \texttt{setState(() \{ \_items.removeWhere(...); \})} — the item disappears from the UI immediately with no full reload.
+  \item Model: \texttt{GroceryItem} with fields \texttt{id}, \texttt{title}, \texttt{checked}.
+  \item Each item is rendered as a \texttt{Card} containing the title and a trailing delete \texttt{IconButton}.
+  \item Pressing delete calls \texttt{ApiService.instance.removeGroceryItem(item.id)}, then executes \texttt{setState(() \{ \_items.removeWhere((e) => e.id == item.id); \})} — the card disappears immediately with no full-page reload.
 \end{itemize}
 
 \textbf{SavedRecipesScreen} (\texttt{lib/screens/saved\_recipes\_screen.dart}):
 \begin{itemize}
-  \item Data model: \texttt{SavedRecipe} (fields: \texttt{recipeSlug}, \texttt{title}, \texttt{author}, \texttt{imageUrl}, \texttt{description}) defined in \texttt{lib/models/app\_models.dart}.
-  \item Each saved recipe is a \texttt{Card} with a cover image, title, description, and a bookmark \texttt{IconButton}.
-  \item Tapping the bookmark calls \texttt{ApiService.instance.removeSavedRecipe(slug)}, then removes the entry from \texttt{\_savedRecipes} with \texttt{setState}, reflecting the change instantly.
+  \item Model: \texttt{SavedRecipe} with fields \texttt{recipeSlug}, \texttt{title}, \texttt{author}, \texttt{imageUrl}, \texttt{description}.
+  \item Each entry is a \texttt{Card} showing a network cover image, author, title, and a bookmark \texttt{IconButton}.
+  \item Tapping the icon calls \texttt{ApiService.instance.removeSavedRecipe(slug)} and splices the item out of \texttt{\_savedRecipes} with \texttt{setState}, updating the list in real time.
 \end{itemize}
 
 \subsection{Form Validation with AlertDialog}
 
-\textbf{LoginScreen} (\texttt{lib/screens/login\_screen.dart}) uses a \texttt{Form} widget with a \texttt{GlobalKey\allowbreak<FormState>}:
+\textbf{LoginScreen} (\texttt{lib/screens/login\_screen.dart}) uses a \texttt{Form} widget controlled by a \texttt{GlobalKey<FormState>}:
 
 \begin{itemize}
-  \item \textbf{Email field} — \texttt{TextFormField} with \texttt{validator}: returns an error string if the value is empty or does not contain \texttt{@}. Error message: \emph{``Enter a valid email''}.
-  \item \textbf{Password field} — \texttt{TextFormField} with \texttt{validator}: returns an error if empty or fewer than 6 characters. Error message: \emph{``Use at least 6 characters''}.
-  \item On submit, \texttt{\_formKey.currentState!.validate()} is called first. If it returns \texttt{false}, both fields render their inline red error text below the respective input and the API call is \emph{not} made.
-  \item On a successful API response, \texttt{showSuccessDialog()} is invoked, which calls \texttt{showDialog} with an \texttt{AlertDialog} containing the title \emph{Welcome Back}, a confirmation message, and a \emph{Continue} button that navigates to Home with \texttt{pushNamedAndRemoveUntil}.
+  \item \textbf{Email field} — \texttt{TextFormField} with \texttt{validator}: fails if empty or lacks \texttt{@}. Error text: \emph{``Enter a valid email''} shown inline in red.
+  \item \textbf{Password field} — \texttt{TextFormField} with \texttt{validator}: fails if empty or fewer than 6 characters. Error text: \emph{``Use at least 6 characters''}.
+  \item On submit, \texttt{\_formKey.currentState!.validate()} runs first. If it returns \texttt{false}, both fields display their error labels and no API call is made.
+  \item On a successful API login, \texttt{showSuccessDialog(context, title: 'Welcome Back', \ldots)} is called. It renders an \texttt{AlertDialog} with title, message, and a \emph{Continue} button that navigates to Home with \texttt{pushNamedAndRemoveUntil}.
 \end{itemize}
 
-\textbf{RegisterScreen} follows the same pattern with four validated fields (full name, email, password, confirm password) and its own success \texttt{AlertDialog}.
+\textbf{RegisterScreen} and \textbf{AddRecipeScreen} follow the same validation-and-dialog pattern with their respective fields.
 
 \subsection{Responsiveness}
 
-All screens are wrapped by the shared \texttt{ChefPage} widget (\texttt{lib/widgets/common\_widgets.dart}), which implements a two-level responsiveness strategy:
+Every screen is wrapped by the shared \texttt{ChefPage} widget (\texttt{lib/widgets/common\_widgets.dart}), which applies a two-level strategy:
 
 \begin{enumerate}
-  \item \textbf{Maximum width constraint:} Content is placed inside \texttt{ConstrainedBox(constraints: BoxConstraints(maxWidth: 620))} aligned to the top-centre of the screen. On tablets or landscape iPads, this prevents content from stretching unreadably wide, keeping a readable line length at all sizes.
-  \item \textbf{Adaptive horizontal padding:} A \texttt{LayoutBuilder} reads \texttt{constraints.maxWidth}. If the screen is wider than 700 logical pixels, \texttt{horizontalPadding} is set to \texttt{40.0}; otherwise it is \texttt{20.0}. This makes the layout feel native on both phones and larger devices.
+  \item \textbf{Maximum-width constraint:} A \texttt{ConstrainedBox(constraints: BoxConstraints(maxWidth: 620))} keeps content from stretching unreadably wide on tablets and landscape phones while remaining aligned to \texttt{Alignment.topCenter}.
+  \item \textbf{Adaptive horizontal padding:} A \texttt{LayoutBuilder} checks \texttt{constraints.maxWidth}. For screens wider than 700 logical pixels the horizontal padding is \texttt{40.0}; otherwise it is \texttt{20.0}, giving a native feel on both phones and larger devices.
 \end{enumerate}
 
-Additionally, \texttt{IngredientPickerScreen} uses its own inner \texttt{LayoutBuilder} to switch the ingredient grid between 2 columns (narrow phones) and 4 columns (screens wider than 420px). \texttt{Wrap} widgets are used for tag chips on Recipe Detail and Browse Cuisine, so they reflow naturally at any width.
+\texttt{IngredientPickerScreen} adds a third level: its own inner \texttt{LayoutBuilder} switches the ingredient grid between \textbf{4 columns} (screens $>$ 420 px wide) and \textbf{2 columns} on narrow devices. \texttt{Wrap} widgets are used for tag chips on Recipe Detail and Browse Cuisine so they reflow naturally at any width without overflow.
 
 %% ══════════════════════════════════════════════════════════════
 \section{UI Implementation vs.\ Wireframes}
 
-The Flutter implementation is a faithful translation of the Step~2 wireframes with the following direct correspondences:
+The Flutter implementation faithfully translates every wireframe from Step~2 into working screens. Key correspondences:
 
 \begin{itemize}
-  \item \textbf{Colour palette} — The warm cream background (\texttt{\#FAF7F2}), primary accent (orange-brown), white cards, and muted borders are identical to the Figma designs. All values are centralised in \texttt{AppColors}.
-  \item \textbf{Typography hierarchy} — Display headings (28 px bold), section titles (20 px Syne), muted subtitles, and small captions map directly to the wireframe text hierarchy. Inter is used for all body text as specified in the design system.
-  \item \textbf{Bottom navigation} — Four tabs (Home, Community, Grocery, Profile) with icon + label, active item highlighted in primary colour — exactly as designed.
-  \item \textbf{Card language} — All recipe cards, tool cards, and profile menu items use 20--28 px rounded rectangles with a 1 px border and white fill, matching the wireframe card components.
-  \item \textbf{Cuisine grid} — The wireframe's 3-column emoji grid is reproduced with a fixed \texttt{childAspectRatio: 2.2} for the horizontal pill shape, matching the compact tile style.
-  \item \textbf{Recipe Detail hero} — Overlaid circular back button (top-left) and bookmark button (top-right) on a 16:10 aspect-ratio image, as shown in the wireframe.
-  \item \textbf{AI Chat layout} — Full-screen scaffold with a fixed header, scrollable message list, and a pinned input bar at the bottom — reproducing the wireframe chat layout exactly.
-  \item \textbf{Additions beyond wireframes} — Smart search autocomplete on Home, round back buttons on all sub-screens, and a Today's Pick recipe card were added to improve usability while keeping the overall visual language consistent.
+  \item \textbf{Colour system} — Warm cream background (\texttt{\#FAF7F2}), primary orange-brown accent, white cards, and subtle warm-grey borders are identical to the Figma colour tokens. All values live in \texttt{AppColors}.
+  \item \textbf{Typography} — The display / title / body / caption hierarchy maps directly to the wireframe text levels. Inter is used for body text and Syne for card titles, matching the Figma font choices.
+  \item \textbf{Bottom navigation} — Four tabs (Home, Community, Grocery, Profile) with icon + label; active item highlighted in the primary colour — exact match to the wireframe nav bar.
+  \item \textbf{Card language} — All recipe cards, tool cards, and menu tiles use 20–28 px corner radii, a 1 px border, and a white fill, reproducing the wireframe card component precisely.
+  \item \textbf{Cuisine grid} — The wireframe 3-column emoji grid is reproduced with \texttt{childAspectRatio: 2.2} for the horizontal pill shape, matching the compact tile proportion.
+  \item \textbf{Recipe Detail hero} — Overlaid circular back button (top-left) and bookmark button (top-right) on a 16:10 aspect-ratio hero image, as designed in the wireframe.
+  \item \textbf{AI Chat layout} — Full-screen scaffold with fixed header, scrollable message list, and a pinned input bar — a direct implementation of the wireframe chat layout.
+  \item \textbf{Enhancements beyond wireframes} — Smart search autocomplete on Home, a consistent round back button on all sub-screens, and a Today's Pick rotation were added to improve usability while keeping the visual language identical.
 \end{itemize}
 
 \end{document}

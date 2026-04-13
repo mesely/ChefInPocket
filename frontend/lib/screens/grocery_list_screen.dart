@@ -62,27 +62,41 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
   Future<void> _addItem(String title, {BuildContext? sheetContext}) async {
     if (title.trim().isEmpty || _isAdding) return;
 
+    final trimmed = title.trim();
+
+    // Optimistic update — add locally right away so the UI never freezes
+    final localItem = GroceryItem(
+      id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+      title: trimmed,
+      note: 'Added manually',
+      emoji: '🛒',
+    );
+
     setState(() {
+      _items = [..._items, localItem];
+      _addItemController.clear();
       _isAdding = true;
     });
 
+    // Close the sheet immediately — don't wait for the network
+    if (sheetContext != null && sheetContext.mounted) {
+      Navigator.pop(sheetContext);
+    }
+
     try {
-      final item = await ApiService.instance.addGroceryItem(title.trim());
+      // Try to sync with backend (8 s timeout so it never hangs)
+      final serverItem = await ApiService.instance
+          .addGroceryItem(trimmed)
+          .timeout(const Duration(seconds: 8));
       if (!mounted) return;
-
+      // Swap the local placeholder with the real server item
       setState(() {
-        _items = [..._items, item];
-        _addItemController.clear();
+        _items = _items
+            .map((e) => e.id == localItem.id ? serverItem : e)
+            .toList();
       });
-
-      if (sheetContext != null && sheetContext.mounted) {
-        Navigator.pop(sheetContext);
-      }
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+    } catch (_) {
+      // Backend unavailable — keep the local item silently
     } finally {
       if (mounted) {
         setState(() {

@@ -1,0 +1,65 @@
+services:
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+    container_name: chefinpocket-api-gateway
+    ports:
+      - '${API_GATEWAY_PORT:-8080}:8080'
+    environment:
+      PORT: 8080
+      AUTH_SERVICE_URL: http://auth-service:5001
+      RECIPE_SERVICE_URL: http://recipe-service:5002
+      PANTRY_SERVICE_URL: http://pantry-service:5003
+      COMMUNITY_SERVICE_URL: http://community-service:5004
+      ASSISTANT_SERVICE_URL: http://assistant-service:5005
+    depends_on:
+      - auth-service
+      - recipe-service
+      - pantry-service
+      - community-service
+      - assistant-service
+
+  auth-service:
+    build:
+      context: ./backend/services/auth-service
+    container_name: chefinpocket-auth-service
+    environment:
+      PORT: 5001
+      DB_NAME: chef_in_pocket_auth
+      MONGODB_URI: ${MONGODB_URI}
+
+  recipe-service:
+    build:
+      context: ./backend/services/recipe-service
+    container_name: chefinpocket-recipe-service
+    environment:
+      PORT: 5002
+      DB_NAME: chef_in_pocket_recipe
+      MONGODB_URI: ${MONGODB_URI}
+
+  pantry-service:
+    build:
+      context: ./backend/services/pantry-service
+    container_name: chefinpocket-pantry-service
+    environment:
+      PORT: 5003
+      DB_NAME: chef_in_pocket_pantry
+      MONGODB_URI: ${MONGODB_URI}
+
+  community-service:
+    build:
+      context: ./backend/services/community-service
+    container_name: chefinpocket-community-service
+    environment:
+      PORT: 5004
+      DB_NAME: chef_in_pocket_community
+      MONGODB_URI: ${MONGODB_URI}
+
+  assistant-service:
+    build:
+      context: ./backend/services/assistant-service
+    container_name: chefinpocket-assistant-service
+    environment:
+      PORT: 5005
+      DB_NAME: chef_in_pocket_assistant
+      MONGODB_URI: ${MONGODB_URI}

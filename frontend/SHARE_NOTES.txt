@@ -1,0 +1,23 @@
+ChefInPocket share copy
+
+This folder was prepared for sharing/uploading.
+
+Excluded to keep the upload light:
+- node_modules
+- frontend/.dart_tool
+- frontend/build
+- Pods
+- IDE/user-specific files
+- .env
+
+Setup after download:
+1. Frontend
+   cd frontend
+   flutter pub get
+   flutter run
+
+2. Backend services
+   Install npm packages inside each backend service that needs them, then run the services or use docker compose from the project root.
+
+3. Environment
+   Copy .env.example to .env and fill in the required values before starting backend services.

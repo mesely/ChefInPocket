@@ -1,56 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../models/app_models.dart';
+import '../models/firestore_models.dart';
 import '../routes/app_routes.dart';
-import '../services/api_service.dart';
+import '../services/firestore_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_spacing.dart';
 import '../utils/app_text_styles.dart';
 import '../widgets/common_widgets.dart';
 
-class MyRecipesScreen extends StatefulWidget {
+class MyRecipesScreen extends StatelessWidget {
   const MyRecipesScreen({super.key});
-
-  @override
-  State<MyRecipesScreen> createState() => _MyRecipesScreenState();
-}
-
-class _MyRecipesScreenState extends State<MyRecipesScreen> {
-  late Future<List<Recipe>> _recipesFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _recipesFuture = _loadMyRecipes();
-  }
-
-  Future<List<Recipe>> _loadMyRecipes() async {
-    final results = await Future.wait([
-      ApiService.instance.fetchCommunityPosts(),
-      ApiService.instance.fetchProfile(),
-    ]);
-
-    final posts = results[0] as List<CommunityPost>;
-    final profile = results[1] as UserProfile;
-    final username = '@${profile.email.split('@').first}';
-
-    final myRecipeSlugs = posts
-        .where((post) => post.author == username && post.recipeSlug != null)
-        .map((post) => post.recipeSlug!)
-        .toList();
-
-    if (myRecipeSlugs.isEmpty) return const [];
-    return ApiService.instance.fetchRecipesBySlugs(myRecipeSlugs);
-  }
 
   @override
   Widget build(BuildContext context) {
     return ChefPage(
-      child: FutureBuilder<List<Recipe>>(
-        future: _recipesFuture,
+      child: StreamBuilder<List<RecipeDoc>>(
+        stream: FirestoreService.instance.streamMyRecipes(),
         builder: (context, snapshot) {
-          final recipes = snapshot.data ?? const <Recipe>[];
-
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -70,7 +36,7 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                 )
               else if (snapshot.hasError)
                 Text('Could not load your recipes.', style: AppTextStyles.body)
-              else if (recipes.isEmpty) ...[
+              else if ((snapshot.data ?? []).isEmpty) ...[
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppSpacing.lg),
@@ -80,33 +46,26 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
                     border: Border.all(color: AppColors.border),
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.restaurant_menu_outlined,
-                          size: 40, color: AppColors.textMuted),
+                      const Icon(Icons.restaurant_menu,
+                          size: 48, color: AppColors.textMuted),
                       const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        "You haven't shared any recipes yet.",
-                        style: AppTextStyles.body,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Post a recipe to see it here.',
-                        style: AppTextStyles.caption,
-                      ),
+                      Text("You haven't shared any recipes yet.",
+                          style: AppTextStyles.body,
+                          textAlign: TextAlign.center),
                       const SizedBox(height: AppSpacing.md),
-                      OutlinedButton(
+                      ElevatedButton(
                         onPressed: () =>
                             Navigator.pushNamed(context, AppRoutes.addRecipe),
-                        child: const Text('Post a Recipe'),
+                        child: const Text('Share a Recipe'),
                       ),
                     ],
                   ),
                 ),
               ] else
-                ...recipes.map(
+                ...(snapshot.data!).map(
                   (recipe) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.only(bottom: 14),
                     child: _MyRecipeCard(recipe: recipe),
                   ),
                 ),
@@ -121,50 +80,32 @@ class _MyRecipesScreenState extends State<MyRecipesScreen> {
 class _MyRecipeCard extends StatelessWidget {
   const _MyRecipeCard({required this.recipe});
 
-  final Recipe recipe;
+  final RecipeDoc recipe;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => Navigator.pushNamed(
-        context,
-        AppRoutes.recipeDetail,
-        arguments: recipe.id,
+    return Card(
+      color: Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: AppColors.border),
       ),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                recipe.imageUrl,
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: AppColors.primarySoft,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Text(
-                        _cuisineEmoji(null),
-                        style: const TextStyle(fontSize: 28),
-                      ),
-                    ),
-                  );
-                },
-              ),
+              borderRadius: BorderRadius.circular(14),
+              child: recipe.imageUrl.isNotEmpty
+                  ? Image.network(
+                      recipe.imageUrl,
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, err, stack) => _imgPlaceholder(),
+                    )
+                  : _imgPlaceholder(),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -173,46 +114,44 @@ class _MyRecipeCard extends StatelessWidget {
                 children: [
                   Text(
                     recipe.title,
-                    style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                    style: AppTextStyles.body
+                        .copyWith(fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 4),
-                  Text(recipe.subtitle, style: AppTextStyles.caption),
+                  if (recipe.cuisine.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(recipe.cuisine, style: AppTextStyles.caption),
+                  ],
                   const SizedBox(height: 4),
                   Text(
-                    recipe.duration,
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    '${recipe.duration} · ${recipe.servings} servings',
+                    style: AppTextStyles.caption,
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textMuted),
+            IconButton(
+              icon: const Icon(Icons.delete_outline,
+                  size: 20, color: AppColors.danger),
+              onPressed: () async {
+                await FirestoreService.instance.deleteRecipe(recipe.id);
+              },
+            ),
           ],
         ),
       ),
     );
   }
 
-  String get _cuisine {
-    final tags = recipe.tags;
-    for (final tag in tags) {
-      if (['Turkish', 'Italian', 'French', 'Healthy', 'Athlete'].contains(tag)) {
-        return tag;
-      }
-    }
-    return '';
-  }
-
-  String _cuisineEmoji(String? c) {
-    switch ((c ?? _cuisine).toLowerCase()) {
-      case 'turkish': return '🇹🇷';
-      case 'italian': return '🍝';
-      case 'french': return '🥐';
-      case 'healthy': return '🥗';
-      case 'athlete': return '💪';
-      default: return '🍽️';
-    }
+  Widget _imgPlaceholder() {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: AppColors.warmAccent,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: const Icon(Icons.restaurant_menu,
+          size: 32, color: AppColors.textMuted),
+    );
   }
 }

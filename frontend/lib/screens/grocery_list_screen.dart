@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../models/app_models.dart';
+import '../models/firestore_models.dart';
 import '../routes/app_routes.dart';
-import '../services/api_service.dart';
+import '../services/firestore_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_spacing.dart';
 import '../utils/app_text_styles.dart';
@@ -16,17 +16,7 @@ class GroceryListScreen extends StatefulWidget {
 }
 
 class _GroceryListScreenState extends State<GroceryListScreen> {
-  late Future<List<GroceryItem>> _itemsFuture;
-  List<GroceryItem> _items = const [];
   final _addItemController = TextEditingController();
-  bool _isAdding = false;
-  bool _loadedItems = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _itemsFuture = _loadItems();
-  }
 
   @override
   void dispose() {
@@ -34,76 +24,44 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
     super.dispose();
   }
 
-  Future<List<GroceryItem>> _loadItems() async {
-    final items = await ApiService.instance.fetchGroceryList();
-    _items = items;
-    _loadedItems = true;
-    return items;
-  }
-
-  Future<void> _removeItem(GroceryItem item) async {
-    try {
-      await ApiService.instance.removeGroceryItem(item.id);
-      if (!mounted) return;
-      setState(() {
-        _items = _items.where((entry) => entry.id != item.id).toList();
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${item.title} removed.')),
-      );
-    } on ApiException catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
-    }
-  }
-
   Future<void> _addItem(String title, {BuildContext? sheetContext}) async {
-    if (title.trim().isEmpty || _isAdding) return;
-
-    final trimmed = title.trim();
-
-    // Optimistic update — add locally right away so the UI never freezes
-    final localItem = GroceryItem(
-      id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-      title: trimmed,
-      note: 'Added manually',
-      emoji: '🛒',
-    );
-
-    setState(() {
-      _items = [..._items, localItem];
-      _addItemController.clear();
-      _isAdding = true;
-    });
-
-    // Close the sheet immediately — don't wait for the network
+    if (title.trim().isEmpty) return;
     if (sheetContext != null && sheetContext.mounted) {
       Navigator.pop(sheetContext);
     }
+    await FirestoreService.instance.addGroceryItem(
+      title: title.trim(),
+      emoji: _emojiForTitle(title),
+    );
+    _addItemController.clear();
+  }
 
-    try {
-      // Try to sync with backend (8 s timeout so it never hangs)
-      final serverItem = await ApiService.instance
-          .addGroceryItem(trimmed)
-          .timeout(const Duration(seconds: 8));
-      if (!mounted) return;
-      // Swap the local placeholder with the real server item
-      setState(() {
-        _items = _items
-            .map((e) => e.id == localItem.id ? serverItem : e)
-            .toList();
-      });
-    } catch (_) {
-      // Backend unavailable — keep the local item silently
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isAdding = false;
-        });
-      }
-    }
+  Future<void> _toggleItem(GroceryItemDoc item) async {
+    await FirestoreService.instance.toggleGroceryItem(item.id, !item.checked);
+  }
+
+  Future<void> _removeItem(GroceryItemDoc item) async {
+    await FirestoreService.instance.deleteGroceryItem(item.id);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${item.title} removed.')),
+    );
+  }
+
+  String _emojiForTitle(String title) {
+    final t = title.toLowerCase();
+    if (t.contains('egg')) return '🥚';
+    if (t.contains('tomato')) return '🍅';
+    if (t.contains('onion')) return '🧅';
+    if (t.contains('garlic')) return '🧄';
+    if (t.contains('milk')) return '🥛';
+    if (t.contains('cheese')) return '🧀';
+    if (t.contains('chicken')) return '🥩';
+    if (t.contains('broccoli')) return '🥦';
+    if (t.contains('oil')) return '🫒';
+    if (t.contains('flour')) return '🌾';
+    if (t.contains('lemon')) return '🍋';
+    return '🛒';
   }
 
   void _showAddBottomSheet() {
@@ -114,13 +72,10 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (sheetContext) {
-        return _AddGrocerySheet(
-          controller: _addItemController,
-          isAdding: _isAdding,
-          onAdd: (title) => _addItem(title, sheetContext: sheetContext),
-        );
-      },
+      builder: (sheetContext) => _AddGrocerySheet(
+        controller: _addItemController,
+        onAdd: (title) => _addItem(title, sheetContext: sheetContext),
+      ),
     );
   }
 
@@ -134,18 +89,32 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
         onPressed: _showAddBottomSheet,
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      child: FutureBuilder<List<GroceryItem>>(
-        future: _itemsFuture,
+      child: StreamBuilder<List<GroceryItemDoc>>(
+        stream: FirestoreService.instance.streamGroceryItems(),
         builder: (context, snapshot) {
-          final items = _loadedItems ? _items : snapshot.data ?? const [];
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const SizedBox(
+              height: 320,
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasError) {
+            return Text('Error loading list.', style: AppTextStyles.body);
+          }
+
+          final items = snapshot.data ?? [];
+          final pending = items.where((i) => !i.checked).toList();
+          final done = items.where((i) => i.checked).toList();
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Expanded(child: Text('Grocery List', style: AppTextStyles.display)),
-                  const InfoChip(label: 'List', isActive: true),
+                  Expanded(
+                    child: Text('Grocery List', style: AppTextStyles.display),
+                  ),
+                  InfoChip(label: '${items.length} items', isActive: true),
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -154,16 +123,7 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
                 style: AppTextStyles.subtitle,
               ),
               const SizedBox(height: AppSpacing.lg),
-              const AppSectionHeader(label: 'Missing Ingredients'),
-              const SizedBox(height: AppSpacing.sm),
-              if (snapshot.connectionState == ConnectionState.waiting && items.isEmpty)
-                const SizedBox(
-                  height: 200,
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              else if (snapshot.hasError)
-                Text('Grocery list could not be loaded.', style: AppTextStyles.body)
-              else if (items.isEmpty)
+              if (items.isEmpty)
                 Card(
                   color: Colors.white,
                   elevation: 0,
@@ -187,33 +147,27 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
                     ),
                   ),
                 )
-              else
-                ...items.map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Card(
-                      color: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: const BorderSide(color: AppColors.border),
-                      ),
-                      child: ListTile(
-                        dense: true,
-                        leading: Text(item.emoji, style: const TextStyle(fontSize: 24)),
-                        title: Text(
-                          item.title,
-                          style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        subtitle: Text(item.note, style: AppTextStyles.caption),
-                        trailing: IconButton(
-                          onPressed: () => _removeItem(item),
-                          icon: const Icon(Icons.delete_outline, size: 20),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+              else ...[
+                if (pending.isNotEmpty) ...[
+                  AppSectionHeader(label: 'To buy (${pending.length})'),
+                  const SizedBox(height: AppSpacing.sm),
+                  ...pending.map((item) => _GroceryTile(
+                        item: item,
+                        onToggle: () => _toggleItem(item),
+                        onDelete: () => _removeItem(item),
+                      )),
+                ],
+                if (done.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  AppSectionHeader(label: 'Done (${done.length})'),
+                  const SizedBox(height: AppSpacing.sm),
+                  ...done.map((item) => _GroceryTile(
+                        item: item,
+                        onToggle: () => _toggleItem(item),
+                        onDelete: () => _removeItem(item),
+                      )),
+                ],
+              ],
             ],
           );
         },
@@ -222,15 +176,61 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
   }
 }
 
-class _AddGrocerySheet extends StatefulWidget {
-  const _AddGrocerySheet({
-    required this.controller,
-    required this.isAdding,
-    required this.onAdd,
+class _GroceryTile extends StatelessWidget {
+  const _GroceryTile({
+    required this.item,
+    required this.onToggle,
+    required this.onDelete,
   });
 
+  final GroceryItemDoc item;
+  final VoidCallback onToggle;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Card(
+        color: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        child: ListTile(
+          dense: true,
+          leading: GestureDetector(
+            onTap: onToggle,
+            child: item.checked
+                ? const Icon(Icons.check_circle, color: AppColors.success)
+                : Text(item.emoji, style: const TextStyle(fontSize: 24)),
+          ),
+          title: Text(
+            item.title,
+            style: AppTextStyles.body.copyWith(
+              fontWeight: FontWeight.w700,
+              decoration:
+                  item.checked ? TextDecoration.lineThrough : null,
+              color: item.checked
+                  ? AppColors.textMuted
+                  : AppColors.textPrimary,
+            ),
+          ),
+          trailing: IconButton(
+            onPressed: onDelete,
+            icon: const Icon(Icons.delete_outline, size: 20),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddGrocerySheet extends StatefulWidget {
+  const _AddGrocerySheet({required this.controller, required this.onAdd});
+
   final TextEditingController controller;
-  final bool isAdding;
   final void Function(String) onAdd;
 
   @override
@@ -266,7 +266,8 @@ class _AddGrocerySheetState extends State<_AddGrocerySheet> {
           Row(
             children: [
               Expanded(
-                child: Text('Add to Grocery List', style: AppTextStyles.title),
+                child:
+                    Text('Add to Grocery List', style: AppTextStyles.title),
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
@@ -284,7 +285,8 @@ class _AddGrocerySheetState extends State<_AddGrocerySheet> {
               return GestureDetector(
                 onTap: () => widget.onAdd(s.$2),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppColors.background,
                     borderRadius: BorderRadius.circular(12),
@@ -297,9 +299,8 @@ class _AddGrocerySheetState extends State<_AddGrocerySheet> {
                       const SizedBox(width: 6),
                       Text(
                         s.$2,
-                        style: AppTextStyles.caption.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.caption
+                            .copyWith(fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -318,23 +319,27 @@ class _AddGrocerySheetState extends State<_AddGrocerySheet> {
                   autofocus: true,
                   decoration: InputDecoration(
                     hintText: 'e.g. Feta cheese...',
-                    hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+                    hintStyle: AppTextStyles.body
+                        .copyWith(color: AppColors.textMuted),
                     filled: true,
                     fillColor: AppColors.background,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderSide:
+                          const BorderSide(color: AppColors.border),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.border),
+                      borderSide:
+                          const BorderSide(color: AppColors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.primary),
+                      borderSide:
+                          const BorderSide(color: AppColors.primary),
                     ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                   ),
                   style: AppTextStyles.body,
                   onSubmitted: widget.onAdd,
@@ -342,10 +347,8 @@ class _AddGrocerySheetState extends State<_AddGrocerySheet> {
               ),
               const SizedBox(width: 10),
               ElevatedButton(
-                onPressed: widget.isAdding
-                    ? null
-                    : () => widget.onAdd(widget.controller.text),
-                child: Text(widget.isAdding ? '...' : 'Add'),
+                onPressed: () => widget.onAdd(widget.controller.text),
+                child: const Text('Add'),
               ),
             ],
           ),

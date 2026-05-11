@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../models/app_models.dart';
+import '../models/firestore_models.dart';
+import '../providers/auth_provider.dart';
 import '../routes/app_routes.dart';
-import '../services/api_service.dart';
+import '../services/firestore_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_spacing.dart';
 import '../utils/app_text_styles.dart';
@@ -16,16 +18,9 @@ class CommunityScreen extends StatefulWidget {
 }
 
 class _CommunityScreenState extends State<CommunityScreen> {
-  late Future<_CommunityData> _communityFuture;
   final _searchController = TextEditingController();
   String _activeFilter = 'All';
   String _query = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _communityFuture = _loadCommunity();
-  }
 
   @override
   void dispose() {
@@ -33,51 +28,33 @@ class _CommunityScreenState extends State<CommunityScreen> {
     super.dispose();
   }
 
-  Future<_CommunityData> _loadCommunity() async {
-    final results = await Future.wait([
-      ApiService.instance.fetchCommunityPosts(),
-      ApiService.instance.fetchSavedRecipes(),
-    ]);
-
-    return _CommunityData(
-      posts: results[0] as List<CommunityPost>,
-      savedSlugs: (results[1] as List<SavedRecipe>)
-          .map((item) => item.recipeSlug)
-          .toSet(),
-    );
-  }
-
-  List<CommunityPost> _visiblePosts(List<CommunityPost> posts) {
-    final query = _query.trim().toLowerCase();
-
-    return posts.where((post) {
-      final roleMatches = _activeFilter == 'All' ||
-          post.role.toLowerCase().contains(_activeFilter.toLowerCase());
-      final queryMatches = query.isEmpty ||
-          '${post.author} ${post.title} ${post.description}'
+  List<RecipeDoc> _filter(List<RecipeDoc> all) {
+    final q = _query.trim().toLowerCase();
+    return all.where((r) {
+      final matchesCuisine = _activeFilter == 'All' ||
+          r.cuisine.toLowerCase().contains(_activeFilter.toLowerCase());
+      final matchesQuery = q.isEmpty ||
+          '${r.createdByName} ${r.title} ${r.description}'
               .toLowerCase()
-              .contains(query);
-
-      return roleMatches && queryMatches;
+              .contains(q);
+      return matchesCuisine && matchesQuery;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    const filters = ['All', 'Recipe', 'Q&A'];
+    const filters = ['All', 'Turkish', 'Italian', 'Mexican', 'Asian'];
 
     return ChefPage(
       currentRoute: AppRoutes.community,
       showBottomNav: true,
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.darkButton,
-        onPressed: () {
-          Navigator.pushNamed(context, AppRoutes.addRecipe);
-        },
+        onPressed: () => Navigator.pushNamed(context, AppRoutes.addRecipe),
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      child: FutureBuilder<_CommunityData>(
-        future: _communityFuture,
+      child: StreamBuilder<List<RecipeDoc>>(
+        stream: FirestoreService.instance.streamAllRecipes(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const SizedBox(
@@ -85,54 +62,44 @@ class _CommunityScreenState extends State<CommunityScreen> {
               child: Center(child: CircularProgressIndicator()),
             );
           }
-
-          if (snapshot.hasError || !snapshot.hasData) {
+          if (snapshot.hasError) {
             return Column(
               children: [
-                Text('Community feed could not be loaded.', style: AppTextStyles.body),
+                Text('Community feed could not be loaded.',
+                    style: AppTextStyles.body),
                 const SizedBox(height: AppSpacing.sm),
                 OutlinedButton(
-                  onPressed: () => setState(() {
-                    _communityFuture = _loadCommunity();
-                  }),
+                  onPressed: () => setState(() {}),
                   child: const Text('Retry'),
                 ),
               ],
             );
           }
 
-          final data = snapshot.data!;
-          final posts = _visiblePosts(data.posts);
+          final posts = _filter(snapshot.data ?? []);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('ChefInPocket Community', style: AppTextStyles.caption),
               const SizedBox(height: AppSpacing.xs),
-              Text('Watch, share, and cook better.', style: AppTextStyles.display),
+              Text('Watch, share, and cook better.',
+                  style: AppTextStyles.display),
               const SizedBox(height: AppSpacing.md),
               AppSearchField(
-                hint: 'Search creators, recipes, techniques...',
+                hint: 'Search creators, recipes...',
                 controller: _searchController,
-                onChanged: (value) {
-                  setState(() {
-                    _query = value;
-                  });
-                },
+                onChanged: (v) => setState(() => _query = v),
               ),
               const SizedBox(height: AppSpacing.md),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: filters.map((filter) {
+                children: filters.map((f) {
                   return InfoChip(
-                    label: filter,
-                    isActive: filter == _activeFilter,
-                    onTap: () {
-                      setState(() {
-                        _activeFilter = filter;
-                      });
-                    },
+                    label: f,
+                    isActive: f == _activeFilter,
+                    onTap: () => setState(() => _activeFilter = f),
                   );
                 }).toList(),
               ),
@@ -151,11 +118,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     children: [
                       Text(
                         'What did you cook today?',
-                        style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                        style: AppTextStyles.body
+                            .copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Share what you cooked or ask a question.',
+                        'Share a recipe or ask the community.',
                         style: AppTextStyles.caption,
                       ),
                       const SizedBox(height: AppSpacing.md),
@@ -163,18 +131,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         children: [
                           Expanded(
                             child: OutlinedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(context, AppRoutes.addRecipe);
-                              },
+                              onPressed: () => Navigator.pushNamed(
+                                  context, AppRoutes.addRecipe),
                               child: const Text('Post Recipe'),
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(context, AppRoutes.askQA);
-                              },
+                              onPressed: () => Navigator.pushNamed(
+                                  context, AppRoutes.askQA),
                               child: const Text('Ask Q&A'),
                             ),
                           ),
@@ -186,16 +152,13 @@ class _CommunityScreenState extends State<CommunityScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
               if (posts.isEmpty)
-                Text('No posts match this filter yet.', style: AppTextStyles.body)
+                Text('No recipes shared yet. Be the first!',
+                    style: AppTextStyles.body)
               else
                 ...posts.map(
-                  (post) => Padding(
+                  (recipe) => Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: _CommunityPostCard(
-                      post: post,
-                      initiallySaved: post.recipeSlug != null &&
-                          data.savedSlugs.contains(post.recipeSlug),
-                    ),
+                    child: _RecipePostCard(recipe: recipe),
                   ),
                 ),
             ],
@@ -206,85 +169,74 @@ class _CommunityScreenState extends State<CommunityScreen> {
   }
 }
 
-class _CommunityPostCard extends StatefulWidget {
-  const _CommunityPostCard({
-    required this.post,
-    required this.initiallySaved,
-  });
+class _RecipePostCard extends StatefulWidget {
+  const _RecipePostCard({required this.recipe});
 
-  final CommunityPost post;
-  final bool initiallySaved;
+  final RecipeDoc recipe;
 
   @override
-  State<_CommunityPostCard> createState() => _CommunityPostCardState();
+  State<_RecipePostCard> createState() => _RecipePostCardState();
 }
 
-class _CommunityPostCardState extends State<_CommunityPostCard> {
-  late bool _isSaved;
+class _RecipePostCardState extends State<_RecipePostCard> {
+  bool _isSaved = false;
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _isSaved = widget.initiallySaved;
+    FirestoreService.instance
+        .isRecipeSaved(widget.recipe.id)
+        .then((saved) {
+      if (mounted) setState(() => _isSaved = saved);
+    });
   }
 
-  Future<void> _toggleSaved() async {
-    final recipeSlug = widget.post.recipeSlug;
-    if (recipeSlug == null || _isSaving) {
-      return;
-    }
-
-    setState(() {
-      _isSaving = true;
-    });
-
+  Future<void> _toggleSave() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
     try {
       if (_isSaved) {
-        await ApiService.instance.removeSavedRecipe(recipeSlug);
+        await FirestoreService.instance.unsaveRecipe(widget.recipe.id);
       } else {
-        await ApiService.instance.saveRecipe(SavedRecipe.fromPost(widget.post));
+        await FirestoreService.instance.saveRecipe(SavedRecipeDoc(
+          recipeId: widget.recipe.id,
+          title: widget.recipe.title,
+          subtitle: widget.recipe.cuisine,
+          description: widget.recipe.description,
+          imageUrl: widget.recipe.imageUrl,
+          author: widget.recipe.createdByName,
+          role: 'Recipe',
+          createdBy: widget.recipe.createdBy,
+          createdAt: widget.recipe.createdAt,
+        ));
       }
-
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        _isSaved = !_isSaved;
-      });
-    } on ApiException catch (error) {
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
-    } finally {
+      if (mounted) setState(() => _isSaved = !_isSaved);
+    } catch (_) {
       if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not update saved recipes.')),
+        );
       }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  void _openRecipe(BuildContext context) {
-    final recipeSlug = widget.post.recipeSlug;
-    if (recipeSlug == null) {
-      return;
-    }
-
-    Navigator.pushNamed(
-      context,
-      AppRoutes.recipeDetail,
-      arguments: recipeSlug,
-    );
+  void _openDetail(BuildContext context) {
+    Navigator.pushNamed(context, AppRoutes.recipeDetail,
+        arguments: widget.recipe.id);
   }
 
   @override
   Widget build(BuildContext context) {
+    final authorHandle = '@${widget.recipe.createdByName.replaceAll(' ', '').toLowerCase()}';
+    final initial = widget.recipe.createdByName.isNotEmpty
+        ? widget.recipe.createdByName[0].toUpperCase()
+        : 'C';
+    final uid = context.read<AuthProvider>().user?.uid;
+    final isOwner = widget.recipe.createdBy == uid;
+
     return Card(
       color: Colors.white,
       elevation: 0,
@@ -299,45 +251,35 @@ class _CommunityPostCardState extends State<_CommunityPostCard> {
           children: [
             Row(
               children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.userProfile,
-                      arguments: widget.post.author,
-                    );
-                  },
-                  child: CircleAvatar(
-                    backgroundColor: AppColors.primarySoft,
-                    child: Text(widget.post.author.substring(1, 2).toUpperCase()),
-                  ),
+                CircleAvatar(
+                  backgroundColor: AppColors.primarySoft,
+                  child: Text(initial),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.userProfile,
-                        arguments: widget.post.author,
-                      );
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.post.author,
-                          style: AppTextStyles.body.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        Text(widget.post.role, style: AppTextStyles.caption),
-                      ],
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.recipe.createdByName,
+                        style: AppTextStyles.body
+                            .copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      Text(authorHandle, style: AppTextStyles.caption),
+                    ],
                   ),
                 ),
+                if (isOwner)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 20),
+                    color: AppColors.danger,
+                    onPressed: () async {
+                      await FirestoreService.instance
+                          .deleteRecipe(widget.recipe.id);
+                    },
+                  ),
                 IconButton(
-                  onPressed: widget.post.recipeSlug == null ? null : _toggleSaved,
+                  onPressed: _toggleSave,
                   icon: Icon(
                     _isSaved ? Icons.bookmark : Icons.bookmark_border,
                     color: _isSaved ? AppColors.primary : AppColors.textMuted,
@@ -347,45 +289,48 @@ class _CommunityPostCardState extends State<_CommunityPostCard> {
             ),
             const SizedBox(height: AppSpacing.md),
             GestureDetector(
-              onTap: () => _openRecipe(context),
+              onTap: () => _openDetail(context),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: Image.network(
-                  widget.post.imageUrl,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
-                      'assets/images/community-bowl.jpg',
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    );
-                  },
-                ),
+                child: widget.recipe.imageUrl.isNotEmpty
+                    ? Image.network(
+                        widget.recipe.imageUrl,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, err, stack) => _placeholder(),
+                      )
+                    : _placeholder(),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
             GestureDetector(
-              onTap: () => _openRecipe(context),
-              child: Text(widget.post.title, style: AppTextStyles.title),
+              onTap: () => _openDetail(context),
+              child: Text(widget.recipe.title, style: AppTextStyles.title),
             ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(widget.post.description, style: AppTextStyles.caption),
+            if (widget.recipe.cuisine.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Text(widget.recipe.cuisine, style: AppTextStyles.caption),
+            ],
+            if (widget.recipe.description.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.xs),
+              Text(widget.recipe.description, style: AppTextStyles.caption),
+            ],
           ],
         ),
       ),
     );
   }
-}
 
-class _CommunityData {
-  const _CommunityData({
-    required this.posts,
-    required this.savedSlugs,
-  });
-
-  final List<CommunityPost> posts;
-  final Set<String> savedSlugs;
+  Widget _placeholder() {
+    return Container(
+      height: 180,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.warmAccent,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Icon(Icons.restaurant_menu, size: 48, color: AppColors.textMuted),
+    );
+  }
 }

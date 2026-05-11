@@ -44,9 +44,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (ok) {
       Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.error ?? 'Login failed.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(auth.error ?? 'Login failed.')));
     }
   }
 
@@ -80,10 +80,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(hintText: 'you@example.com'),
+                  decoration: const InputDecoration(
+                    hintText: 'you@example.com',
+                  ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email is required';
-                    if (!v.contains('@')) return 'Enter a valid email';
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Email is required';
+                    }
+                    if (!v.contains('@')) {
+                      return 'Enter a valid email';
+                    }
                     return null;
                   },
                 ),
@@ -93,7 +99,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: const InputDecoration(hintText: 'Enter your password'),
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your password',
+                  ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Password is required';
                     if (v.length < 6) return 'Use at least 6 characters';
@@ -156,8 +164,7 @@ class _AuthToggle extends StatelessWidget {
               ),
               child: Text(
                 'Log In',
-                style:
-                    AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -175,8 +182,9 @@ class _AuthToggle extends StatelessWidget {
                 ),
                 child: Text(
                   'Register',
-                  style: AppTextStyles.body
-                      .copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),

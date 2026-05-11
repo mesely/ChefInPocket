@@ -101,7 +101,9 @@ class _CuisineTile extends StatelessWidget {
                 children: [
                   Text(
                     cuisine.title,
-                    style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   Text(cuisine.subtitle, style: AppTextStyles.caption),
                 ],
@@ -113,7 +115,10 @@ class _CuisineTile extends StatelessWidget {
                 GestureDetector(
                   onTap: onBrowse,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primarySoft,
                       borderRadius: BorderRadius.circular(10),
@@ -131,7 +136,10 @@ class _CuisineTile extends StatelessWidget {
                 GestureDetector(
                   onTap: onMatch,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.background,
                       borderRadius: BorderRadius.circular(10),

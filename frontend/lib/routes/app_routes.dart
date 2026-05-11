@@ -4,8 +4,10 @@ class AppRoutes {
   // Private constructor to prevent instantiation
   AppRoutes._();
 
+  static const appEntry = '/';
+
   // Authentication routes
-  static const onboarding = '/';
+  static const onboarding = '/onboarding';
   static const register = '/register';
   static const login = '/login';
 

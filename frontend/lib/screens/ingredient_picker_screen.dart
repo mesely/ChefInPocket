@@ -53,8 +53,8 @@ class _IngredientPickerScreenState extends State<IngredientPickerScreen> {
       var slugs = await ApiService.instance.matchIngredientSlugs(selected);
 
       if (slugs.isEmpty) {
-        final directMatches =
-            await ApiService.instance.searchRecipesByIngredients(selected);
+        final directMatches = await ApiService.instance
+            .searchRecipesByIngredients(selected);
         slugs = directMatches.map((recipe) => recipe.id).toList();
       }
 
@@ -76,9 +76,9 @@ class _IngredientPickerScreenState extends State<IngredientPickerScreen> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -106,7 +106,10 @@ class _IngredientPickerScreenState extends State<IngredientPickerScreen> {
           if (snapshot.hasError || !snapshot.hasData) {
             return Column(
               children: [
-                Text('Ingredients could not be loaded.', style: AppTextStyles.body),
+                Text(
+                  'Ingredients could not be loaded.',
+                  style: AppTextStyles.body,
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 OutlinedButton(
                   onPressed: () => setState(() {
@@ -125,7 +128,10 @@ class _IngredientPickerScreenState extends State<IngredientPickerScreen> {
             children: [
               const AppBackButton(),
               const SizedBox(height: AppSpacing.sm),
-              Text('What ingredients do you have?', style: AppTextStyles.display),
+              Text(
+                'What ingredients do you have?',
+                style: AppTextStyles.display,
+              ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 cuisine == null
@@ -161,16 +167,23 @@ class _IngredientPickerScreenState extends State<IngredientPickerScreen> {
                         onTap: () => _toggleIngredient(item),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isSelected ? AppColors.primarySoft : Colors.white,
+                            color: isSelected
+                                ? AppColors.primarySoft
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: isSelected ? AppColors.primary : AppColors.border,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.border,
                             ),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(item.emoji, style: const TextStyle(fontSize: 24)),
+                              Text(
+                                item.emoji,
+                                style: const TextStyle(fontSize: 24),
+                              ),
                               const SizedBox(height: 8),
                               Text(
                                 item.title,

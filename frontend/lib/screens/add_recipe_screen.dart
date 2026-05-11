@@ -73,7 +73,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         message: 'Your recipe has been shared with the community.',
         onPressed: () {
           Navigator.pushNamedAndRemoveUntil(
-              context, AppRoutes.community, (_) => false);
+            context,
+            AppRoutes.community,
+            (_) => false,
+          );
         },
       );
     } else {
@@ -85,7 +88,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const cuisines = ['Turkish', 'Italian', 'French', 'Mexican', 'Asian', 'Healthy', 'Other'];
+    const cuisines = [
+      'Turkish',
+      'Italian',
+      'French',
+      'Mexican',
+      'Asian',
+      'Healthy',
+      'Other',
+    ];
     final isPublishing = context.watch<RecipeProvider>().loading;
 
     return ChefPage(
@@ -110,10 +121,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _titleController,
-                  decoration:
-                      const InputDecoration(hintText: 'e.g. Creamy Menemen'),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. Creamy Menemen',
+                  ),
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Title is required'
+                      : null,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text('DESCRIPTION', style: AppTextStyles.sectionLabel),
@@ -122,7 +135,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   controller: _descController,
                   maxLines: 2,
                   decoration: const InputDecoration(
-                      hintText: 'A short description of your recipe...'),
+                    hintText: 'A short description of your recipe...',
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text('CUISINE', style: AppTextStyles.sectionLabel),
@@ -139,15 +153,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   }).toList(),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                Text('INGREDIENTS (one per line)',
-                    style: AppTextStyles.sectionLabel),
+                Text(
+                  'INGREDIENTS (one per line)',
+                  style: AppTextStyles.sectionLabel,
+                ),
                 const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _ingredientsController,
                   maxLines: 4,
                   decoration: const InputDecoration(
-                    hintText:
-                        'Eggs\nTomatoes\nOnion\nOlive oil',
+                    hintText: 'Eggs\nTomatoes\nOnion\nOlive oil',
                   ),
                   validator: (v) => (v == null || v.trim().isEmpty)
                       ? 'Ingredients are required'
@@ -170,11 +185,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       child: TextFormField(
                         controller: _prepTimeController,
                         keyboardType: TextInputType.number,
-                        decoration:
-                            const InputDecoration(hintText: 'Prep time (min)'),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Required'
-                            : null,
+                        decoration: const InputDecoration(
+                          hintText: 'Prep time (min)',
+                        ),
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -182,11 +197,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       child: TextFormField(
                         controller: _servingsController,
                         keyboardType: TextInputType.number,
-                        decoration:
-                            const InputDecoration(hintText: 'Servings'),
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? 'Required'
-                            : null,
+                        decoration: const InputDecoration(hintText: 'Servings'),
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
                     ),
                   ],

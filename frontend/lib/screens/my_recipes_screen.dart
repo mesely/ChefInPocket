@@ -47,12 +47,17 @@ class MyRecipesScreen extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.restaurant_menu,
-                          size: 48, color: AppColors.textMuted),
+                      const Icon(
+                        Icons.restaurant_menu,
+                        size: 48,
+                        color: AppColors.textMuted,
+                      ),
                       const SizedBox(height: AppSpacing.sm),
-                      Text("You haven't shared any recipes yet.",
-                          style: AppTextStyles.body,
-                          textAlign: TextAlign.center),
+                      Text(
+                        "You haven't shared any recipes yet.",
+                        style: AppTextStyles.body,
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: AppSpacing.md),
                       ElevatedButton(
                         onPressed: () =>
@@ -114,8 +119,9 @@ class _MyRecipeCard extends StatelessWidget {
                 children: [
                   Text(
                     recipe.title,
-                    style: AppTextStyles.body
-                        .copyWith(fontWeight: FontWeight.w700),
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   if (recipe.cuisine.isNotEmpty) ...[
                     const SizedBox(height: 2),
@@ -130,8 +136,11 @@ class _MyRecipeCard extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline,
-                  size: 20, color: AppColors.danger),
+              icon: const Icon(
+                Icons.delete_outline,
+                size: 20,
+                color: AppColors.danger,
+              ),
               onPressed: () async {
                 await FirestoreService.instance.deleteRecipe(recipe.id);
               },
@@ -150,8 +159,11 @@ class _MyRecipeCard extends StatelessWidget {
         color: AppColors.warmAccent,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: const Icon(Icons.restaurant_menu,
-          size: 32, color: AppColors.textMuted),
+      child: const Icon(
+        Icons.restaurant_menu,
+        size: 32,
+        color: AppColors.textMuted,
+      ),
     );
   }
 }

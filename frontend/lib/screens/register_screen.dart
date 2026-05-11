@@ -84,11 +84,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _nameController,
-                  decoration:
-                      const InputDecoration(hintText: 'Selman Yılmaz'),
+                  decoration: const InputDecoration(hintText: 'Selman Yılmaz'),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Full name is required';
-                    if (v.trim().length < 2) return 'Enter at least 2 characters';
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Full name is required';
+                    }
+                    if (v.trim().length < 2) {
+                      return 'Enter at least 2 characters';
+                    }
                     return null;
                   },
                 ),
@@ -98,10 +101,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration:
-                      const InputDecoration(hintText: 'you@example.com'),
+                  decoration: const InputDecoration(
+                    hintText: 'you@example.com',
+                  ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email is required';
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Email is required';
+                    }
                     if (!v.contains('@') || !v.contains('.')) {
                       return 'Enter a valid email';
                     }
@@ -114,11 +120,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration:
-                      const InputDecoration(hintText: 'Create a password'),
+                  decoration: const InputDecoration(
+                    hintText: 'Create a password',
+                  ),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Password is required';
-                    if (v.length < 6) return 'Use at least 6 characters';
+                    if (v == null || v.isEmpty) {
+                      return 'Password is required';
+                    }
+                    if (v.length < 6) {
+                      return 'Use at least 6 characters';
+                    }
                     return null;
                   },
                 ),
@@ -128,11 +139,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _confirmController,
                   obscureText: true,
-                  decoration:
-                      const InputDecoration(hintText: 'Repeat your password'),
+                  decoration: const InputDecoration(
+                    hintText: 'Repeat your password',
+                  ),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Please confirm your password';
-                    if (v != _passwordController.text) return 'Passwords do not match';
+                    if (v == null || v.isEmpty) {
+                      return 'Please confirm your password';
+                    }
+                    if (v != _passwordController.text) {
+                      return 'Passwords do not match';
+                    }
                     return null;
                   },
                   onFieldSubmitted: (_) => _submit(),
@@ -194,8 +210,9 @@ class _AuthToggle extends StatelessWidget {
                 ),
                 child: Text(
                   'Log In',
-                  style: AppTextStyles.body
-                      .copyWith(fontWeight: FontWeight.w600),
+                  style: AppTextStyles.body.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -212,8 +229,7 @@ class _AuthToggle extends StatelessWidget {
               ),
               child: Text(
                 'Register',
-                style:
-                    AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
                 textAlign: TextAlign.center,
               ),
             ),

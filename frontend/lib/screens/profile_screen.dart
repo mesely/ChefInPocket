@@ -20,9 +20,7 @@ class ProfileScreen extends StatelessWidget {
     final user = auth.user;
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final fullName = user.displayName ?? 'Chef';
@@ -147,8 +145,10 @@ class _Metric extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value,
-            style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          value,
+          style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w700),
+        ),
         Text(label, style: AppTextStyles.caption),
       ],
     );

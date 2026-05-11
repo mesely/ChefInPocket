@@ -31,9 +31,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
   List<RecipeDoc> _filter(List<RecipeDoc> all) {
     final q = _query.trim().toLowerCase();
     return all.where((r) {
-      final matchesCuisine = _activeFilter == 'All' ||
+      final matchesCuisine =
+          _activeFilter == 'All' ||
           r.cuisine.toLowerCase().contains(_activeFilter.toLowerCase());
-      final matchesQuery = q.isEmpty ||
+      final matchesQuery =
+          q.isEmpty ||
           '${r.createdByName} ${r.title} ${r.description}'
               .toLowerCase()
               .contains(q);
@@ -65,8 +67,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
           if (snapshot.hasError) {
             return Column(
               children: [
-                Text('Community feed could not be loaded.',
-                    style: AppTextStyles.body),
+                Text(
+                  'Community feed could not be loaded.',
+                  style: AppTextStyles.body,
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 OutlinedButton(
                   onPressed: () => setState(() {}),
@@ -83,8 +87,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
             children: [
               Text('ChefInPocket Community', style: AppTextStyles.caption),
               const SizedBox(height: AppSpacing.xs),
-              Text('Watch, share, and cook better.',
-                  style: AppTextStyles.display),
+              Text(
+                'Watch, share, and cook better.',
+                style: AppTextStyles.display,
+              ),
               const SizedBox(height: AppSpacing.md),
               AppSearchField(
                 hint: 'Search creators, recipes...',
@@ -118,8 +124,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     children: [
                       Text(
                         'What did you cook today?',
-                        style: AppTextStyles.body
-                            .copyWith(fontWeight: FontWeight.w700),
+                        style: AppTextStyles.body.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
@@ -132,15 +139,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
                           Expanded(
                             child: OutlinedButton(
                               onPressed: () => Navigator.pushNamed(
-                                  context, AppRoutes.addRecipe),
+                                context,
+                                AppRoutes.addRecipe,
+                              ),
                               child: const Text('Post Recipe'),
                             ),
                           ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: () => Navigator.pushNamed(
-                                  context, AppRoutes.askQA),
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, AppRoutes.askQA),
                               child: const Text('Ask Q&A'),
                             ),
                           ),
@@ -152,8 +161,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
               ),
               const SizedBox(height: AppSpacing.lg),
               if (posts.isEmpty)
-                Text('No recipes shared yet. Be the first!',
-                    style: AppTextStyles.body)
+                Text(
+                  'No recipes shared yet. Be the first!',
+                  style: AppTextStyles.body,
+                )
               else
                 ...posts.map(
                   (recipe) => Padding(
@@ -185,9 +196,7 @@ class _RecipePostCardState extends State<_RecipePostCard> {
   @override
   void initState() {
     super.initState();
-    FirestoreService.instance
-        .isRecipeSaved(widget.recipe.id)
-        .then((saved) {
+    FirestoreService.instance.isRecipeSaved(widget.recipe.id).then((saved) {
       if (mounted) setState(() => _isSaved = saved);
     });
   }
@@ -199,17 +208,19 @@ class _RecipePostCardState extends State<_RecipePostCard> {
       if (_isSaved) {
         await FirestoreService.instance.unsaveRecipe(widget.recipe.id);
       } else {
-        await FirestoreService.instance.saveRecipe(SavedRecipeDoc(
-          recipeId: widget.recipe.id,
-          title: widget.recipe.title,
-          subtitle: widget.recipe.cuisine,
-          description: widget.recipe.description,
-          imageUrl: widget.recipe.imageUrl,
-          author: widget.recipe.createdByName,
-          role: 'Recipe',
-          createdBy: widget.recipe.createdBy,
-          createdAt: widget.recipe.createdAt,
-        ));
+        await FirestoreService.instance.saveRecipe(
+          SavedRecipeDoc(
+            recipeId: widget.recipe.id,
+            title: widget.recipe.title,
+            subtitle: widget.recipe.cuisine,
+            description: widget.recipe.description,
+            imageUrl: widget.recipe.imageUrl,
+            author: widget.recipe.createdByName,
+            role: 'Recipe',
+            createdBy: widget.recipe.createdBy,
+            createdAt: widget.recipe.createdAt,
+          ),
+        );
       }
       if (mounted) setState(() => _isSaved = !_isSaved);
     } catch (_) {
@@ -224,13 +235,17 @@ class _RecipePostCardState extends State<_RecipePostCard> {
   }
 
   void _openDetail(BuildContext context) {
-    Navigator.pushNamed(context, AppRoutes.recipeDetail,
-        arguments: widget.recipe.id);
+    Navigator.pushNamed(
+      context,
+      AppRoutes.recipeDetail,
+      arguments: widget.recipe.id,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final authorHandle = '@${widget.recipe.createdByName.replaceAll(' ', '').toLowerCase()}';
+    final authorHandle =
+        '@${widget.recipe.createdByName.replaceAll(' ', '').toLowerCase()}';
     final initial = widget.recipe.createdByName.isNotEmpty
         ? widget.recipe.createdByName[0].toUpperCase()
         : 'C';
@@ -262,8 +277,9 @@ class _RecipePostCardState extends State<_RecipePostCard> {
                     children: [
                       Text(
                         widget.recipe.createdByName,
-                        style: AppTextStyles.body
-                            .copyWith(fontWeight: FontWeight.w700),
+                        style: AppTextStyles.body.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       Text(authorHandle, style: AppTextStyles.caption),
                     ],
@@ -274,8 +290,9 @@ class _RecipePostCardState extends State<_RecipePostCard> {
                     icon: const Icon(Icons.delete_outline, size: 20),
                     color: AppColors.danger,
                     onPressed: () async {
-                      await FirestoreService.instance
-                          .deleteRecipe(widget.recipe.id);
+                      await FirestoreService.instance.deleteRecipe(
+                        widget.recipe.id,
+                      );
                     },
                   ),
                 IconButton(
@@ -330,7 +347,11 @@ class _RecipePostCardState extends State<_RecipePostCard> {
         color: AppColors.warmAccent,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Icon(Icons.restaurant_menu, size: 48, color: AppColors.textMuted),
+      child: const Icon(
+        Icons.restaurant_menu,
+        size: 48,
+        color: AppColors.textMuted,
+      ),
     );
   }
 }

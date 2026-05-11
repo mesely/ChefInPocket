@@ -101,11 +101,13 @@ class _HomeScreenState extends State<HomeScreen> {
           : await ApiService.instance.fetchRecipes();
 
       final recipe = recipes.cast<Recipe?>().firstWhere(
-            (item) =>
-                item != null &&
-                '${item.title} ${item.subtitle}'.toLowerCase().contains(normalizedQuery),
-            orElse: () => null,
-          );
+        (item) =>
+            item != null &&
+            '${item.title} ${item.subtitle}'.toLowerCase().contains(
+              normalizedQuery,
+            ),
+        orElse: () => null,
+      );
 
       if (!mounted) return;
 
@@ -116,12 +118,16 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
 
-      Navigator.pushNamed(context, AppRoutes.recipeDetail, arguments: recipe.id);
+      Navigator.pushNamed(
+        context,
+        AppRoutes.recipeDetail,
+        arguments: recipe.id,
+      );
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -208,7 +214,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         title: item.title,
                         subtitle: item.subtitle,
                         icon: item.icon,
-                        onTap: () => Navigator.pushNamed(context, item.routeName),
+                        onTap: () =>
+                            Navigator.pushNamed(context, item.routeName),
                       ),
                     ),
                   ),
@@ -250,12 +257,18 @@ class _SearchSuggestions extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  const Icon(Icons.search, size: 16, color: AppColors.textMuted),
+                  const Icon(
+                    Icons.search,
+                    size: 16,
+                    color: AppColors.textMuted,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       recipe.title,
-                      style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                      style: AppTextStyles.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   Text(recipe.duration, style: AppTextStyles.caption),

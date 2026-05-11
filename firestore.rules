@@ -1,30 +1,56 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function ownsPath(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function hasOwnerAndTimestamp() {
+      return request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.keys().hasAll(['id', 'createdBy', 'createdAt']);
+    }
 
     // Users: only the owner can read/write their own profile
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, delete: if ownsPath(uid);
+      allow create, update: if ownsPath(uid)
+        && request.resource.data.id == uid
+        && request.resource.data.uid == uid
+        && hasOwnerAndTimestamp();
     }
 
     // Recipes: anyone authenticated can read; only creator can write/delete
     match /recipes/{recipeId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.id == recipeId
+        && request.resource.data.keys().hasAll(['title', 'createdBy', 'createdAt'])
+        && hasOwnerAndTimestamp();
+      allow update: if isSignedIn()
+        && resource.data.createdBy == request.auth.uid
         && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.keys().hasAll(['id','title','createdBy','createdAt']);
-      allow update, delete: if request.auth != null
-        && resource.data.createdBy == request.auth.uid;
+        && request.resource.data.id == recipeId;
+      allow delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
     }
 
     // Saved recipes: per-user subcollection, only owner can read/write
     match /savedRecipes/{uid}/items/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, delete: if ownsPath(uid);
+      allow create, update: if ownsPath(uid)
+        && request.resource.data.id == docId
+        && hasOwnerAndTimestamp();
     }
 
     // Grocery items: per-user subcollection, only owner can read/write
     match /groceryItems/{uid}/items/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, delete: if ownsPath(uid);
+      allow create, update: if ownsPath(uid)
+        && request.resource.data.id == docId
+        && hasOwnerAndTimestamp();
     }
   }
 }

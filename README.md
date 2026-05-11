@@ -10,28 +10,25 @@ pinned: false
 
 # ChefInPocket
 
-ChefInPocket is a CS310 Step 3 monorepo that includes:
+ChefInPocket is a CS310 Step 4 Flutter + Firebase project that includes:
 
+- Firebase Authentication for email/password sign-up, login, and logout.
+- Cloud Firestore storage for recipes, saved recipes, grocery items, and user profiles.
+- Provider-based state management for auth, recipes, and persisted preferences.
+- Firestore security rules that restrict private data to the signed-in owner.
 - A Flutter UI implementation based on the team wireframes.
-- Beginner-friendly Node.js microservices for auth, recipes, pantry, community, and AI assistant flows.
-- Docker support for the backend stack and a separate Dockerfile for the Flutter web build.
 
 ## Project Structure
 
 ```text
 chef_in_pocket/
 ├── frontend/
-│   └── frontend/              # Flutter mobile/web UI
-├── backend/
-│   ├── api-gateway/           # Single entry point for service routing
-│   └── services/
-│       ├── auth-service/
-│       ├── recipe-service/
-│       ├── pantry-service/
-│       ├── community-service/
-│       └── assistant-service/
-├── docker-compose.yml
-└── .env.example
+│   ├── lib/                   # Flutter source code
+│   ├── ios/Runner/            # iOS Firebase config
+│   ├── assets/                # Images and fonts
+│   └── pubspec.yaml
+├── firestore.rules            # Firestore access control
+└── reports/                   # Previous step reports and screenshots
 ```
 
 ## Frontend Highlights
@@ -41,15 +38,16 @@ chef_in_pocket/
 - Custom fonts: Inter and Syne
 - Asset images and network images
 - Form validation with inline errors and success `AlertDialog`
-- Card-based grocery list with dynamic remove buttons
+- Protected navigation for logged-out and logged-in users
 - Responsive layouts for narrow and wide screens
 
-## Backend Highlights
+## Firebase Backend Highlights
 
-- Microservice-ready Express + MongoDB services
-- API Gateway that forwards all `/api/*` requests
-- Seed data so the services are useful on first run
-- Dockerized backend services for a clean local setup
+- Auth state is managed through `AuthProvider`.
+- Firestore CRUD lives in `FirestoreService`.
+- Recipes, saved recipes, and grocery items use Firestore streams for real-time updates.
+- Theme mode is saved and restored with `SharedPreferences`.
+- Security rules are defined in `firestore.rules`.
 
 ## Local Run
 
@@ -61,17 +59,13 @@ flutter pub get
 flutter run
 ```
 
-### Backend with Docker
-
-1. Copy `.env.example` to `.env`
-2. Fill in your MongoDB Atlas credentials locally
-3. Run:
+### Firestore Rules
 
 ```bash
-docker compose up --build
+firebase deploy --only firestore:rules
 ```
 
-The API gateway will be available at `http://localhost:8080`.
+Requires Firebase CLI access to the `chefinpocket` Firebase project.
 
 ## Frontend Docker
 

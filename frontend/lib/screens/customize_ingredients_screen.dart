@@ -68,9 +68,9 @@ class _CustomizeIngredientsScreenState
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -94,7 +94,10 @@ class _CustomizeIngredientsScreenState
           }
 
           if (snapshot.hasError || !snapshot.hasData) {
-            return Text('Customization options could not be loaded.', style: AppTextStyles.body);
+            return Text(
+              'Customization options could not be loaded.',
+              style: AppTextStyles.body,
+            );
           }
 
           final options = snapshot.data!.customizationOptions;
@@ -130,11 +133,16 @@ class _CustomizeIngredientsScreenState
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      subtitle: Text(option.suggestion, style: AppTextStyles.caption),
+                      subtitle: Text(
+                        option.suggestion,
+                        style: AppTextStyles.caption,
+                      ),
                       controlAffinity: ListTileControlAffinity.trailing,
                       onChanged: (_) {
                         setState(() {
-                          if (_selectedIngredients.contains(option.ingredient)) {
+                          if (_selectedIngredients.contains(
+                            option.ingredient,
+                          )) {
                             _selectedIngredients.remove(option.ingredient);
                           } else {
                             _selectedIngredients.add(option.ingredient);

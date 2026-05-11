@@ -62,10 +62,7 @@ class ChefPage extends StatelessWidget {
 /// Bottom navigation bar widget with 4 main tabs.
 /// Uses named routes for navigation between screens.
 class AppBottomNav extends StatelessWidget {
-  const AppBottomNav({
-    super.key,
-    required this.currentRoute,
-  });
+  const AppBottomNav({super.key, required this.currentRoute});
 
   final String currentRoute;
 
@@ -125,8 +122,9 @@ class AppBottomNav extends StatelessWidget {
                     Text(
                       item.label,
                       style: AppTextStyles.caption.copyWith(
-                        color:
-                            isActive ? AppColors.primary : AppColors.textMuted,
+                        color: isActive
+                            ? AppColors.primary
+                            : AppColors.textMuted,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -176,7 +174,9 @@ class AppSearchField extends StatelessWidget {
               onSubmitted: onSubmitted,
               decoration: InputDecoration(
                 hintText: hint,
-                hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+                hintStyle: AppTextStyles.body.copyWith(
+                  color: AppColors.textMuted,
+                ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -208,15 +208,9 @@ class AppSectionHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label.toUpperCase(),
-          style: AppTextStyles.sectionLabel,
-        ),
+        Text(label.toUpperCase(), style: AppTextStyles.sectionLabel),
         if (actionText != null)
-          TextButton(
-            onPressed: onActionTap,
-            child: Text(actionText!),
-          ),
+          TextButton(onPressed: onActionTap, child: Text(actionText!)),
       ],
     );
   }
@@ -260,10 +254,7 @@ class InfoChip extends StatelessWidget {
 }
 
 class InfoTag extends StatelessWidget {
-  const InfoTag({
-    super.key,
-    required this.label,
-  });
+  const InfoTag({super.key, required this.label});
 
   final String label;
 
@@ -332,8 +323,9 @@ class FeatureShortcutCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style:
-                          AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                      style: AppTextStyles.body.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(subtitle, style: AppTextStyles.caption),
@@ -350,11 +342,7 @@ class FeatureShortcutCard extends StatelessWidget {
 }
 
 class MetricTile extends StatelessWidget {
-  const MetricTile({
-    super.key,
-    required this.value,
-    required this.label,
-  });
+  const MetricTile({super.key, required this.value, required this.label});
 
   final String value;
   final String label;
@@ -384,11 +372,7 @@ class MetricTile extends StatelessWidget {
 }
 
 class ChatBubble extends StatelessWidget {
-  const ChatBubble({
-    super.key,
-    required this.text,
-    required this.isChef,
-  });
+  const ChatBubble({super.key, required this.text, required this.isChef});
 
   final String text;
   final bool isChef;

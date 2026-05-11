@@ -103,9 +103,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (snapshot.hasError)
-                Text('User recipes could not be loaded.', style: AppTextStyles.body)
+                Text(
+                  'User recipes could not be loaded.',
+                  style: AppTextStyles.body,
+                )
               else if (recipes.isEmpty)
-                Text('This chef has not shared a recipe yet.', style: AppTextStyles.body)
+                Text(
+                  'This chef has not shared a recipe yet.',
+                  style: AppTextStyles.body,
+                )
               else
                 ...recipes.map(
                   (recipe) => Padding(
@@ -192,7 +198,9 @@ class _RecipeCard extends StatelessWidget {
                   children: [
                     Text(
                       recipe.title,
-                      style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                      style: AppTextStyles.body.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(recipe.subtitle, style: AppTextStyles.caption),

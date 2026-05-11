@@ -80,7 +80,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isSaved ? 'Recipe saved.' : 'Recipe removed from saved.'),
+          content: Text(
+            _isSaved ? 'Recipe saved.' : 'Recipe removed from saved.',
+          ),
           duration: const Duration(seconds: 1),
         ),
       );
@@ -89,9 +91,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -160,10 +162,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     child: CircleAvatar(
                       backgroundColor: Colors.white,
                       child: IconButton(
-                        onPressed: _isSaving ? null : () => _toggleSaved(recipe),
+                        onPressed: _isSaving
+                            ? null
+                            : () => _toggleSaved(recipe),
                         icon: Icon(
                           _isSaved ? Icons.bookmark : Icons.bookmark_border,
-                          color: _isSaved ? AppColors.primary : AppColors.textPrimary,
+                          color: _isSaved
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -216,10 +222,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 onTap: () => Navigator.pushNamed(
                   context,
                   AppRoutes.aiChat,
-                  arguments: {
-                    'slug': recipe.id,
-                    'context': recipe.title,
-                  },
+                  arguments: {'slug': recipe.id, 'context': recipe.title},
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),

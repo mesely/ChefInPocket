@@ -26,8 +26,7 @@ class SavedRecipesScreen extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child:
-                        Text('Saved Recipes', style: AppTextStyles.display),
+                    child: Text('Saved Recipes', style: AppTextStyles.display),
                   ),
                   InfoChip(label: '${saved.length}', isActive: true),
                 ],
@@ -44,8 +43,7 @@ class SavedRecipesScreen extends StatelessWidget {
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (snapshot.hasError)
-                Text('Could not load saved recipes.',
-                    style: AppTextStyles.body)
+                Text('Could not load saved recipes.', style: AppTextStyles.body)
               else if (saved.isEmpty)
                 Card(
                   color: Colors.white,
@@ -122,8 +120,9 @@ class _SavedRecipeCard extends StatelessWidget {
                 children: [
                   Text(
                     recipe.title,
-                    style: AppTextStyles.body
-                        .copyWith(fontWeight: FontWeight.w700),
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   if (recipe.subtitle.isNotEmpty) ...[
                     const SizedBox(height: 2),
@@ -135,15 +134,18 @@ class _SavedRecipeCard extends StatelessWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.bookmark,
-                  color: AppColors.primary, size: 22),
+              icon: const Icon(
+                Icons.bookmark,
+                color: AppColors.primary,
+                size: 22,
+              ),
               onPressed: () async {
-                await FirestoreService.instance
-                    .unsaveRecipe(recipe.recipeId);
+                await FirestoreService.instance.unsaveRecipe(recipe.recipeId);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content: Text('${recipe.title} removed from saved.')),
+                      content: Text('${recipe.title} removed from saved.'),
+                    ),
                   );
                 }
               },
@@ -162,8 +164,11 @@ class _SavedRecipeCard extends StatelessWidget {
         color: AppColors.warmAccent,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: const Icon(Icons.restaurant_menu,
-          size: 32, color: AppColors.textMuted),
+      child: const Icon(
+        Icons.restaurant_menu,
+        size: 32,
+        color: AppColors.textMuted,
+      ),
     );
   }
 }

@@ -34,8 +34,9 @@ class _RecipeResultsScreenState extends State<RecipeResultsScreen> {
 
     List<Recipe> recipes;
     if (arguments is Map && arguments['slugs'] is List) {
-      final slugs =
-          (arguments['slugs'] as List).map((item) => item.toString()).toList();
+      final slugs = (arguments['slugs'] as List)
+          .map((item) => item.toString())
+          .toList();
       recipes = await ApiService.instance.fetchRecipesBySlugs(slugs);
     } else {
       recipes = await ApiService.instance.fetchRecipes();
@@ -170,24 +171,47 @@ class _RecipeResultsScreenState extends State<RecipeResultsScreen> {
 String _recipeEmoji(Recipe recipe) {
   final cuisine = recipe.tags
       .firstWhere(
-        (t) => ['Turkish', 'Italian', 'French', 'Healthy', 'Athlete', 'Soup', 'Salad', 'Breakfast', 'Pizza', 'Pasta', 'Grilled']
-            .contains(t),
+        (t) => [
+          'Turkish',
+          'Italian',
+          'French',
+          'Healthy',
+          'Athlete',
+          'Soup',
+          'Salad',
+          'Breakfast',
+          'Pizza',
+          'Pasta',
+          'Grilled',
+        ].contains(t),
         orElse: () => '',
       )
       .toLowerCase();
   switch (cuisine) {
-    case 'turkish': return '🇹🇷';
-    case 'italian': return '🍝';
-    case 'french': return '🥐';
-    case 'healthy': return '🥗';
-    case 'athlete': return '💪';
-    case 'soup': return '🍲';
-    case 'salad': return '🥬';
-    case 'breakfast': return '🍳';
-    case 'pizza': return '🍕';
-    case 'pasta': return '🍝';
-    case 'grilled': return '🔥';
-    default: return '🍽️';
+    case 'turkish':
+      return '🇹🇷';
+    case 'italian':
+      return '🍝';
+    case 'french':
+      return '🥐';
+    case 'healthy':
+      return '🥗';
+    case 'athlete':
+      return '💪';
+    case 'soup':
+      return '🍲';
+    case 'salad':
+      return '🥬';
+    case 'breakfast':
+      return '🍳';
+    case 'pizza':
+      return '🍕';
+    case 'pasta':
+      return '🍝';
+    case 'grilled':
+      return '🔥';
+    default:
+      return '🍽️';
   }
 }
 
@@ -235,7 +259,9 @@ class _RecipeResultCard extends StatelessWidget {
                 children: [
                   Text(
                     recipe.title,
-                    style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   Text(recipe.subtitle, style: AppTextStyles.caption),
                 ],

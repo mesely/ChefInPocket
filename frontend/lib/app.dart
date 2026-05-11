@@ -1,7 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'providers/auth_provider.dart';
 import 'providers/preferences_provider.dart';
 import 'routes/app_routes.dart';
 import 'screens/add_recipe_screen.dart';
@@ -37,55 +37,85 @@ class ChefInPocketApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'ChefInPocket',
       theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       themeMode: prefs.themeMode,
-      home: const _AuthGate(),
+      initialRoute: AppRoutes.appEntry,
       routes: {
+        AppRoutes.appEntry: (context) => const _AuthGate(),
         AppRoutes.onboarding: (context) => const OnboardingScreen(),
         AppRoutes.register: (context) => const RegisterScreen(),
         AppRoutes.login: (context) => const LoginScreen(),
-        AppRoutes.home: (context) => const HomeScreen(),
-        AppRoutes.browseCuisine: (context) => const BrowseCuisineScreen(),
-        AppRoutes.ingredientPicker: (context) => const IngredientPickerScreen(),
-        AppRoutes.recipeResults: (context) => const RecipeResultsScreen(),
-        AppRoutes.recipeDetail: (context) => const RecipeDetailScreen(),
-        AppRoutes.servingScale: (context) => const ServingScaleScreen(),
-        AppRoutes.aiChat: (context) => const AiChatScreen(),
-        AppRoutes.groceryList: (context) => const GroceryListScreen(),
-        AppRoutes.addRecipe: (context) => const AddRecipeScreen(),
+        AppRoutes.home: (context) => const AuthGuard(child: HomeScreen()),
+        AppRoutes.browseCuisine: (context) =>
+            const AuthGuard(child: BrowseCuisineScreen()),
+        AppRoutes.ingredientPicker: (context) =>
+            const AuthGuard(child: IngredientPickerScreen()),
+        AppRoutes.recipeResults: (context) =>
+            const AuthGuard(child: RecipeResultsScreen()),
+        AppRoutes.recipeDetail: (context) =>
+            const AuthGuard(child: RecipeDetailScreen()),
+        AppRoutes.servingScale: (context) =>
+            const AuthGuard(child: ServingScaleScreen()),
+        AppRoutes.aiChat: (context) => const AuthGuard(child: AiChatScreen()),
+        AppRoutes.groceryList: (context) =>
+            const AuthGuard(child: GroceryListScreen()),
+        AppRoutes.addRecipe: (context) =>
+            const AuthGuard(child: AddRecipeScreen()),
         AppRoutes.customizeIngredients: (context) =>
-            const CustomizeIngredientsScreen(),
-        AppRoutes.cookingSteps: (context) => const CookingStepsScreen(),
-        AppRoutes.community: (context) => const CommunityScreen(),
-        AppRoutes.profile: (context) => const ProfileScreen(),
-        AppRoutes.userProfile: (context) => const UserProfileScreen(),
-        AppRoutes.savedRecipes: (context) => const SavedRecipesScreen(),
-        AppRoutes.myRecipes: (context) => const MyRecipesScreen(),
-        AppRoutes.askQA: (context) => const AskQAScreen(),
+            const AuthGuard(child: CustomizeIngredientsScreen()),
+        AppRoutes.cookingSteps: (context) =>
+            const AuthGuard(child: CookingStepsScreen()),
+        AppRoutes.community: (context) =>
+            const AuthGuard(child: CommunityScreen()),
+        AppRoutes.profile: (context) => const AuthGuard(child: ProfileScreen()),
+        AppRoutes.userProfile: (context) =>
+            const AuthGuard(child: UserProfileScreen()),
+        AppRoutes.savedRecipes: (context) =>
+            const AuthGuard(child: SavedRecipesScreen()),
+        AppRoutes.myRecipes: (context) =>
+            const AuthGuard(child: MyRecipesScreen()),
+        AppRoutes.askQA: (context) => const AuthGuard(child: AskQAScreen()),
       },
     );
   }
 }
 
-// Auth gate: logged-out → Login, logged-in → Home
 class _AuthGate extends StatelessWidget {
   const _AuthGate();
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (snapshot.data != null) {
-          return const HomeScreen();
-        }
-        return const OnboardingScreen();
-      },
-    );
+    final auth = context.watch<AuthProvider>();
+
+    if (auth.status == AuthStatus.unknown) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (auth.isLoggedIn) {
+      return const HomeScreen();
+    }
+
+    return const OnboardingScreen();
+  }
+}
+
+class AuthGuard extends StatelessWidget {
+  const AuthGuard({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
+    if (auth.status == AuthStatus.unknown) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (!auth.isLoggedIn) {
+      return const OnboardingScreen();
+    }
+
+    return child;
   }
 }

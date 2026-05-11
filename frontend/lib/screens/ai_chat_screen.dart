@@ -92,9 +92,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
       _scrollToBottom();
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -116,8 +116,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
               child: FutureBuilder<List<ChatMessage>>(
                 future: _historyFuture,
                 builder: (context, snapshot) {
-                  final messages =
-                      _messages.isEmpty ? (snapshot.data ?? const []) : _messages;
+                  final messages = _messages.isEmpty
+                      ? (snapshot.data ?? const [])
+                      : _messages;
 
                   if (snapshot.connectionState == ConnectionState.waiting &&
                       messages.isEmpty) {
@@ -220,7 +221,11 @@ class _ChatHeader extends StatelessWidget {
               color: AppColors.primarySoft,
               borderRadius: BorderRadius.circular(13),
             ),
-            child: const Icon(Icons.auto_awesome, color: AppColors.primary, size: 20),
+            child: const Icon(
+              Icons.auto_awesome,
+              color: AppColors.primary,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -229,7 +234,9 @@ class _ChatHeader extends StatelessWidget {
               children: [
                 Text(
                   'Chef AI',
-                  style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                  style: AppTextStyles.body.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 Text(contextName, style: AppTextStyles.caption),
               ],
@@ -266,8 +273,12 @@ class _ChatInput extends StatelessWidget {
             child: TextField(
               controller: controller,
               decoration: InputDecoration(
-                hintText: isSending ? 'Chef is thinking...' : 'Ask your chef anything...',
-                hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+                hintText: isSending
+                    ? 'Chef is thinking...'
+                    : 'Ask your chef anything...',
+                hintStyle: AppTextStyles.body.copyWith(
+                  color: AppColors.textMuted,
+                ),
                 filled: true,
                 fillColor: AppColors.background,
                 border: OutlineInputBorder(
@@ -282,8 +293,10 @@ class _ChatInput extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                   borderSide: const BorderSide(color: AppColors.primary),
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
               style: AppTextStyles.body,
               maxLines: null,
@@ -293,10 +306,16 @@ class _ChatInput extends StatelessWidget {
           const SizedBox(width: 10),
           CircleAvatar(
             radius: 22,
-            backgroundColor: isSending ? AppColors.border : AppColors.darkButton,
+            backgroundColor: isSending
+                ? AppColors.border
+                : AppColors.darkButton,
             child: IconButton(
               onPressed: isSending ? null : onSend,
-              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+              icon: const Icon(
+                Icons.send_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
           ),
         ],

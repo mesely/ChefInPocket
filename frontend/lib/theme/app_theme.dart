@@ -16,15 +16,16 @@ class AppTheme {
       useMaterial3: true,
       fontFamily: AppTextStyles.bodyFont,
       scaffoldBackgroundColor: AppColors.background,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.light,
-      ).copyWith(
-        primary: AppColors.primary,
-        secondary: AppColors.warmAccent,
-        surface: Colors.white,
-        onSurface: AppColors.textPrimary,
-      ),
+      colorScheme:
+          ColorScheme.fromSeed(
+            seedColor: AppColors.primary,
+            brightness: Brightness.light,
+          ).copyWith(
+            primary: AppColors.primary,
+            secondary: AppColors.warmAccent,
+            surface: Colors.white,
+            onSurface: AppColors.textPrimary,
+          ),
     );
 
     return base.copyWith(
@@ -70,10 +71,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.darkButton,
           foregroundColor: Colors.white,
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           minimumSize: const Size.fromHeight(54),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
@@ -99,6 +97,78 @@ class AppTheme {
       dividerTheme: const DividerThemeData(
         color: AppColors.border,
         thickness: 1,
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    final base = ThemeData(
+      useMaterial3: true,
+      fontFamily: AppTextStyles.bodyFont,
+      scaffoldBackgroundColor: const Color(0xFF111111),
+      colorScheme:
+          ColorScheme.fromSeed(
+            seedColor: AppColors.primary,
+            brightness: Brightness.dark,
+          ).copyWith(
+            primary: AppColors.primary,
+            secondary: AppColors.warmAccent,
+            surface: const Color(0xFF1A1A1A),
+            onSurface: Colors.white,
+          ),
+    );
+
+    return base.copyWith(
+      textTheme: base.textTheme.copyWith(
+        displayLarge: AppTextStyles.display.copyWith(color: Colors.white),
+        headlineMedium: AppTextStyles.title.copyWith(color: Colors.white),
+        titleLarge: AppTextStyles.title.copyWith(color: Colors.white),
+        bodyLarge: AppTextStyles.body.copyWith(color: Colors.white),
+        bodyMedium: AppTextStyles.body.copyWith(color: Colors.white),
+        bodySmall: AppTextStyles.caption.copyWith(
+          color: const Color(0xFFC6C6C6),
+        ),
+        labelLarge: AppTextStyles.sectionLabel.copyWith(
+          color: const Color(0xFFC6C6C6),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1A1A1A),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        hintStyle: AppTextStyles.body.copyWith(color: const Color(0xFFC6C6C6)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Color(0xFF343434)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: Color(0xFF343434)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          minimumSize: const Size.fromHeight(54),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: const Color(0xFF242424),
+        contentTextStyle: AppTextStyles.body.copyWith(color: Colors.white),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }

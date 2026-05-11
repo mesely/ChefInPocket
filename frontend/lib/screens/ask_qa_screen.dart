@@ -59,9 +59,9 @@ class _AskQAScreenState extends State<AskQAScreen> {
       );
     } on ApiException catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } finally {
       if (mounted) {
         setState(() {
@@ -91,7 +91,9 @@ class _AskQAScreenState extends State<AskQAScreen> {
             decoration: BoxDecoration(
               color: AppColors.primarySoft,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.3),
+              ),
             ),
             child: Row(
               children: [
@@ -100,7 +102,9 @@ class _AskQAScreenState extends State<AskQAScreen> {
                 Expanded(
                   child: Text(
                     'Ask about substitutions, timing, techniques, or anything food-related.',
-                    style: AppTextStyles.caption.copyWith(color: AppColors.primary),
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
               ],
@@ -118,7 +122,8 @@ class _AskQAScreenState extends State<AskQAScreen> {
                   controller: _questionController,
                   maxLines: 4,
                   decoration: const InputDecoration(
-                    hintText: 'e.g. What can I substitute for tahini? How long should I marinate chicken?',
+                    hintText:
+                        'e.g. What can I substitute for tahini? How long should I marinate chicken?',
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -135,9 +140,7 @@ class _AskQAScreenState extends State<AskQAScreen> {
                 const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _authorController,
-                  decoration: const InputDecoration(
-                    hintText: 'e.g. Nilsu',
-                  ),
+                  decoration: const InputDecoration(hintText: 'e.g. Nilsu'),
                 ),
               ],
             ),

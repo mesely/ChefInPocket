@@ -45,8 +45,10 @@ class _ServingScaleScreenState extends State<ServingScaleScreen> {
       _initializedServings = true;
     }
 
-    final scaledIngredients =
-        await ApiService.instance.scaleRecipe(recipe.id, _servings);
+    final scaledIngredients = await ApiService.instance.scaleRecipe(
+      recipe.id,
+      _servings,
+    );
 
     return _ScaleData(recipe: recipe, ingredients: scaledIngredients);
   }
@@ -69,7 +71,8 @@ class _ServingScaleScreenState extends State<ServingScaleScreen> {
       child: FutureBuilder<_ScaleData>(
         future: _scaleDataFuture,
         builder: (context, snapshot) {
-          final ingredients = snapshot.data?.ingredients ?? const <ScaledIngredient>[];
+          final ingredients =
+              snapshot.data?.ingredients ?? const <ScaledIngredient>[];
           final recipe = snapshot.data?.recipe ?? _recipe;
 
           return Column(
@@ -99,7 +102,9 @@ class _ServingScaleScreenState extends State<ServingScaleScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       OutlinedButton(
-                        onPressed: _servings <= 1 ? null : () => _changeServings(-1),
+                        onPressed: _servings <= 1
+                            ? null
+                            : () => _changeServings(-1),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(48, 48),
                           padding: EdgeInsets.zero,
@@ -127,7 +132,8 @@ class _ServingScaleScreenState extends State<ServingScaleScreen> {
               const SizedBox(height: AppSpacing.lg),
               const AppSectionHeader(label: 'Scaled Ingredients'),
               const SizedBox(height: AppSpacing.sm),
-              if (snapshot.connectionState == ConnectionState.waiting && ingredients.isEmpty)
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  ingredients.isEmpty)
                 const SizedBox(
                   height: 200,
                   child: Center(child: CircularProgressIndicator()),
@@ -185,10 +191,7 @@ class _ServingScaleScreenState extends State<ServingScaleScreen> {
 }
 
 class _ScaleData {
-  const _ScaleData({
-    required this.recipe,
-    required this.ingredients,
-  });
+  const _ScaleData({required this.recipe, required this.ingredients});
 
   final Recipe recipe;
   final List<ScaledIngredient> ingredients;

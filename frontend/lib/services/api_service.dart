@@ -24,12 +24,14 @@ class ApiService {
   static String? loggedInEmail;
 
   Uri _uri(String path, [Map<String, String>? queryParameters]) {
-    return Uri.parse('$_baseUrl$path').replace(queryParameters: queryParameters);
+    return Uri.parse(
+      '$_baseUrl$path',
+    ).replace(queryParameters: queryParameters);
   }
 
   Map<String, String> get _headers => const {
-        'Content-Type': 'application/json',
-      };
+    'Content-Type': 'application/json',
+  };
 
   Future<dynamic> _decode(http.Response response) async {
     final body = response.body.trim();
@@ -51,11 +53,7 @@ class ApiService {
 
   Future<dynamic> _post(String path, Map<String, dynamic> body) async {
     return _decode(
-      await http.post(
-        _uri(path),
-        headers: _headers,
-        body: jsonEncode(body),
-      ),
+      await http.post(_uri(path), headers: _headers, body: jsonEncode(body)),
     );
   }
 
@@ -102,7 +100,9 @@ class ApiService {
     return recipes.whereType<Recipe>().toList();
   }
 
-  Future<List<Recipe>> searchRecipesByIngredients(List<String> ingredients) async {
+  Future<List<Recipe>> searchRecipesByIngredients(
+    List<String> ingredients,
+  ) async {
     final data = await _post('/api/recipes/search-by-ingredients', {
       'ingredients': ingredients,
     });
@@ -128,14 +128,13 @@ class ApiService {
     }
 
     return items
-        .map((item) => ScaledIngredient.fromJson(Map<String, dynamic>.from(item)))
+        .map(
+          (item) => ScaledIngredient.fromJson(Map<String, dynamic>.from(item)),
+        )
         .toList();
   }
 
-  Future<String> customizeRecipe(
-    String slug,
-    List<String> replacements,
-  ) async {
+  Future<String> customizeRecipe(String slug, List<String> replacements) async {
     final data = await _post('/api/recipes/$slug/customize', {
       'replacements': replacements,
     });
@@ -166,14 +165,14 @@ class ApiService {
   Future<List<IngredientOption>> fetchIngredients() async {
     final data = await _get('/api/pantry/ingredients');
     return (data as List)
-        .map((item) => IngredientOption.fromJson(Map<String, dynamic>.from(item)))
+        .map(
+          (item) => IngredientOption.fromJson(Map<String, dynamic>.from(item)),
+        )
         .toList();
   }
 
   Future<List<String>> matchIngredientSlugs(List<String> ingredients) async {
-    final data = await _post('/api/pantry/match', {
-      'ingredients': ingredients,
-    });
+    final data = await _post('/api/pantry/match', {'ingredients': ingredients});
 
     final slugs = data is Map ? data['recommendedRecipeSlugs'] as List? : null;
     if (slugs == null) {
@@ -191,9 +190,7 @@ class ApiService {
   }
 
   Future<GroceryItem> addGroceryItem(String title) async {
-    final data = await _post('/api/pantry/grocery-list', {
-      'title': title,
-    });
+    final data = await _post('/api/pantry/grocery-list', {'title': title});
 
     return GroceryItem.fromJson(Map<String, dynamic>.from(data['item']));
   }
@@ -252,10 +249,7 @@ class ApiService {
   }
 
   Future<void> login(String email, String password) async {
-    await _post('/api/auth/login', {
-      'email': email,
-      'password': password,
-    });
+    await _post('/api/auth/login', {'email': email, 'password': password});
     loggedInEmail = email.trim().toLowerCase();
   }
 
@@ -273,9 +267,10 @@ class ApiService {
   }
 
   Future<List<ChatMessage>> fetchChatHistory(String context) async {
-    final data = await _get('/api/assistant/history', query: {
-      'context': context,
-    });
+    final data = await _get(
+      '/api/assistant/history',
+      query: {'context': context},
+    );
 
     return (data as List)
         .map((item) => ChatMessage.fromJson(Map<String, dynamic>.from(item)))

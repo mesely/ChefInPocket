@@ -32,11 +32,16 @@ class FirestoreService {
     required String fullName,
     required String email,
   }) async {
-    await _users.doc(uid).set({
+    final ref = _users.doc(uid);
+    final existing = await ref.get();
+    await ref.set({
+      'id': uid,
       'uid': uid,
       'fullName': fullName,
       'email': email,
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdBy': uid,
+      'createdAt':
+          existing.data()?['createdAt'] ?? FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
 
@@ -95,11 +100,11 @@ class FirestoreService {
   }
 
   Stream<List<RecipeDoc>> streamMyRecipes() {
-    return _recipes
-        .where('createdBy', isEqualTo: _uid)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snap) => snap.docs.map(RecipeDoc.fromFirestore).toList());
+    return _recipes.where('createdBy', isEqualTo: _uid).snapshots().map((snap) {
+      final recipes = snap.docs.map(RecipeDoc.fromFirestore).toList();
+      recipes.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return recipes;
+    });
   }
 
   Stream<List<RecipeDoc>> streamAllRecipes() {
@@ -113,7 +118,11 @@ class FirestoreService {
     await _recipes.doc(recipeId).delete();
   }
 
-  Future<void> updateRecipe(String recipeId, {required String title, required String description}) async {
+  Future<void> updateRecipe(
+    String recipeId, {
+    required String title,
+    required String description,
+  }) async {
     await _recipes.doc(recipeId).update({
       'title': title,
       'description': description,
@@ -132,6 +141,7 @@ class FirestoreService {
   Future<void> saveRecipe(SavedRecipeDoc recipe) async {
     final ref = _savedRecipes(_uid).doc(recipe.recipeId);
     await ref.set({
+      'id': ref.id,
       'recipeId': recipe.recipeId,
       'title': recipe.title,
       'subtitle': recipe.subtitle,
@@ -162,7 +172,10 @@ class FirestoreService {
         .map((snap) => snap.docs.map(GroceryItemDoc.fromFirestore).toList());
   }
 
-  Future<GroceryItemDoc> addGroceryItem({required String title, String emoji = '🛒'}) async {
+  Future<GroceryItemDoc> addGroceryItem({
+    required String title,
+    String emoji = '🛒',
+  }) async {
     final ref = _groceryItems(_uid).doc();
     final now = DateTime.now();
     await ref.set({
@@ -184,7 +197,9 @@ class FirestoreService {
   }
 
   Future<void> toggleGroceryItem(String itemId, bool checked) async {
-    await _groceryItems(_uid).doc(itemId).update({'checked': checked});
+    await _groceryItems(
+      _uid,
+    ).doc(itemId).update({'checked': checked, 'createdBy': _uid});
   }
 
   Future<void> deleteGroceryItem(String itemId) async {

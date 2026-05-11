@@ -76,17 +76,21 @@ class AppContent {
 
   factory AppContent.fromJson(Map<String, dynamic> json) {
     return AppContent(
-      homeCategories:
-          _mapList(json['homeCategories']).map(CategoryItem.fromJson).toList(),
-      cuisineOptions:
-          _mapList(json['cuisineOptions']).map(CategoryItem.fromJson).toList(),
-      quickAccess:
-          _mapList(json['quickAccess']).map(FeatureCardItem.fromJson).toList(),
-      profileMenu:
-          _mapList(json['profileMenu']).map(ProfileMenuEntry.fromJson).toList(),
-      customizationOptions: _mapList(json['customizationOptions'])
-          .map(CustomizationOption.fromJson)
-          .toList(),
+      homeCategories: _mapList(
+        json['homeCategories'],
+      ).map(CategoryItem.fromJson).toList(),
+      cuisineOptions: _mapList(
+        json['cuisineOptions'],
+      ).map(CategoryItem.fromJson).toList(),
+      quickAccess: _mapList(
+        json['quickAccess'],
+      ).map(FeatureCardItem.fromJson).toList(),
+      profileMenu: _mapList(
+        json['profileMenu'],
+      ).map(ProfileMenuEntry.fromJson).toList(),
+      customizationOptions: _mapList(
+        json['customizationOptions'],
+      ).map(CustomizationOption.fromJson).toList(),
     );
   }
 
@@ -98,10 +102,7 @@ class AppContent {
 }
 
 class CategoryItem {
-  const CategoryItem({
-    required this.title,
-    required this.emoji,
-  });
+  const CategoryItem({required this.title, required this.emoji});
 
   factory CategoryItem.fromJson(Map<String, dynamic> json) {
     return CategoryItem(
@@ -200,8 +201,9 @@ class Recipe {
       duration: _asString(json['duration'], '20 min'),
       servings: _asInt(json['servings'], 2),
       tags: _stringList(json['tags']),
-      ingredients:
-          _mapList(json['ingredients']).map(IngredientPortion.fromJson).toList(),
+      ingredients: _mapList(
+        json['ingredients'],
+      ).map(IngredientPortion.fromJson).toList(),
       steps: _stringList(json['steps']),
       imageUrl: _asString(json['imageUrl']),
     );
@@ -265,10 +267,7 @@ class GroceryItem {
 }
 
 class ChatMessage {
-  const ChatMessage({
-    required this.text,
-    required this.isChef,
-  });
+  const ChatMessage({required this.text, required this.isChef});
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(

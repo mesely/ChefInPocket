@@ -47,7 +47,10 @@ class _CookingStepsScreenState extends State<CookingStepsScreen> {
           }
 
           if (snapshot.hasError || !snapshot.hasData) {
-            return Text('Cooking steps could not be loaded.', style: AppTextStyles.body);
+            return Text(
+              'Cooking steps could not be loaded.',
+              style: AppTextStyles.body,
+            );
           }
 
           final recipe = snapshot.data!;
@@ -65,10 +68,7 @@ class _CookingStepsScreenState extends State<CookingStepsScreen> {
                   Expanded(
                     child: Text(recipe.title, style: AppTextStyles.display),
                   ),
-                  InfoChip(
-                    label: '${steps.length} steps',
-                    isActive: true,
-                  ),
+                  InfoChip(label: '${steps.length} steps', isActive: true),
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),

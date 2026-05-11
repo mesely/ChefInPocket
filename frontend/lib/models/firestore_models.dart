@@ -2,25 +2,33 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserProfileDoc {
   const UserProfileDoc({
+    required this.id,
     required this.uid,
     required this.fullName,
     required this.email,
+    required this.createdBy,
     required this.createdAt,
   });
 
-  factory UserProfileDoc.fromFirestore(DocumentSnapshot<Map<String, dynamic>> snap) {
+  factory UserProfileDoc.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snap,
+  ) {
     final d = snap.data()!;
     return UserProfileDoc(
+      id: d['id'] as String? ?? snap.id,
       uid: d['uid'] as String? ?? snap.id,
       fullName: d['fullName'] as String? ?? 'Chef',
       email: d['email'] as String? ?? '',
+      createdBy: d['createdBy'] as String? ?? snap.id,
       createdAt: (d['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
+  final String id;
   final String uid;
   final String fullName;
   final String email;
+  final String createdBy;
   final DateTime createdAt;
 }
 
@@ -51,7 +59,10 @@ class RecipeDoc {
 
     List<Map<String, dynamic>> toMapList(Object? v) {
       if (v is List) {
-        return v.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+        return v
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
       }
       return [];
     }
@@ -90,6 +101,7 @@ class RecipeDoc {
 
 class SavedRecipeDoc {
   const SavedRecipeDoc({
+    this.id = '',
     required this.recipeId,
     required this.title,
     required this.subtitle,
@@ -101,9 +113,12 @@ class SavedRecipeDoc {
     required this.createdAt,
   });
 
-  factory SavedRecipeDoc.fromFirestore(DocumentSnapshot<Map<String, dynamic>> snap) {
+  factory SavedRecipeDoc.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snap,
+  ) {
     final d = snap.data()!;
     return SavedRecipeDoc(
+      id: d['id'] as String? ?? snap.id,
       recipeId: d['recipeId'] as String? ?? snap.id,
       title: d['title'] as String? ?? 'Saved recipe',
       subtitle: d['subtitle'] as String? ?? '',
@@ -116,6 +131,7 @@ class SavedRecipeDoc {
     );
   }
 
+  final String id;
   final String recipeId;
   final String title;
   final String subtitle;
@@ -137,7 +153,9 @@ class GroceryItemDoc {
     required this.createdAt,
   });
 
-  factory GroceryItemDoc.fromFirestore(DocumentSnapshot<Map<String, dynamic>> snap) {
+  factory GroceryItemDoc.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snap,
+  ) {
     final d = snap.data()!;
     return GroceryItemDoc(
       id: d['id'] as String? ?? snap.id,

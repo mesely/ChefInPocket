@@ -1,5 +1,5 @@
 name: chef_in_pocket_app
-description: "ChefInPocket Flutter UI implementation for CS310 Step 3."
+description: "ChefInPocket Flutter app — CS310 Step 4 with Firebase backend."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -11,6 +11,11 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   http: ^1.6.0
+  firebase_core: ^3.13.1
+  firebase_auth: ^5.5.3
+  cloud_firestore: ^5.6.6
+  provider: ^6.1.5
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:

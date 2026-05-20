@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/app_models.dart';
+import '../providers/app_data_provider.dart';
 import '../routes/app_routes.dart';
 import '../services/api_service.dart';
 import '../utils/app_colors.dart';
@@ -16,15 +18,8 @@ class IngredientPickerScreen extends StatefulWidget {
 }
 
 class _IngredientPickerScreenState extends State<IngredientPickerScreen> {
-  late Future<List<IngredientOption>> _ingredientsFuture;
   final Set<String> _selectedIds = {'eggs', 'tomato', 'onion'};
   bool _isMatching = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _ingredientsFuture = ApiService.instance.fetchIngredients();
-  }
 
   void _toggleIngredient(IngredientOption item) {
     setState(() {
@@ -91,19 +86,20 @@ class _IngredientPickerScreenState extends State<IngredientPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final cuisine = ModalRoute.of(context)?.settings.arguments as String?;
+    final dataProvider = context.watch<AppDataProvider>();
 
     return ChefPage(
-      child: FutureBuilder<List<IngredientOption>>(
-        future: _ingredientsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      child: Builder(
+        builder: (context) {
+          if (dataProvider.isLoading && dataProvider.ingredients.isEmpty) {
             return const SizedBox(
               height: 320,
               child: Center(child: CircularProgressIndicator()),
             );
           }
 
-          if (snapshot.hasError || !snapshot.hasData) {
+          if (dataProvider.errorMessage != null &&
+              dataProvider.ingredients.isEmpty) {
             return Column(
               children: [
                 Text(
@@ -112,16 +108,14 @@ class _IngredientPickerScreenState extends State<IngredientPickerScreen> {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 OutlinedButton(
-                  onPressed: () => setState(() {
-                    _ingredientsFuture = ApiService.instance.fetchIngredients();
-                  }),
+                  onPressed: () => context.read<AppDataProvider>().refresh(),
                   child: const Text('Retry'),
                 ),
               ],
             );
           }
 
-          final ingredients = snapshot.data!;
+          final ingredients = dataProvider.ingredients;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,

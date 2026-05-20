@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_spacing.dart';
 import '../utils/app_text_styles.dart';
+import '../utils/recipe_filter.dart';
 import '../widgets/common_widgets.dart';
 
 class RecipeResultsScreen extends StatefulWidget {
@@ -43,30 +44,19 @@ class _RecipeResultsScreenState extends State<RecipeResultsScreen> {
     }
 
     if (arguments is Map && arguments['cuisine'] is String) {
-      final cuisine = (arguments['cuisine'] as String).toLowerCase();
-      final filtered = recipes.where((r) {
-        return '${r.title} ${r.subtitle} ${r.tags.join(' ')}'
-            .toLowerCase()
-            .contains(cuisine);
-      }).toList();
-      if (filtered.isNotEmpty) return filtered;
+      final cuisine = arguments['cuisine'] as String;
+      return RecipeFilter.filterByCuisine(recipes: recipes, cuisine: cuisine);
     }
 
     return recipes;
   }
 
   List<Recipe> _filteredRecipes(List<Recipe> recipes) {
-    if (_activeFilter == 'All') return recipes;
+    if (_activeFilter == 'All') {
+      return recipes;
+    }
 
-    final query = _activeFilter.toLowerCase();
-    final filtered = recipes.where((recipe) {
-      final haystack =
-          '${recipe.title} ${recipe.subtitle} ${recipe.tags.join(' ')}'
-              .toLowerCase();
-      return haystack.contains(query);
-    }).toList();
-
-    return filtered.isEmpty ? recipes : filtered;
+    return RecipeFilter.filterByCuisine(recipes: recipes, cuisine: _activeFilter);
   }
 
   String get _cuisineTitle {

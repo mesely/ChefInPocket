@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-import '../providers/recipe_provider.dart';
 import '../routes/app_routes.dart';
+import '../services/api_service.dart';
 import '../utils/app_spacing.dart';
 import '../utils/app_text_styles.dart';
 import '../widgets/common_widgets.dart';
@@ -17,72 +16,154 @@ class AddRecipeScreen extends StatefulWidget {
 class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
-  final _descController = TextEditingController();
   final _ingredientsController = TextEditingController();
-  final _stepsController = TextEditingController();
   final _prepTimeController = TextEditingController();
   final _servingsController = TextEditingController();
+
   String _selectedCuisine = 'Turkish';
+  bool _isPublishing = false;
+  bool _didLoad = false;
+  String? _editingRecipeId;
+
+  bool get _isEditing => _editingRecipeId != null;
 
   @override
   void dispose() {
     _titleController.dispose();
-    _descController.dispose();
     _ingredientsController.dispose();
-    _stepsController.dispose();
     _prepTimeController.dispose();
     _servingsController.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_didLoad) {
+      return;
+    }
+
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+    if (arguments is String && arguments.isNotEmpty) {
+      _editingRecipeId = arguments;
+      _loadRecipe(arguments);
+    }
+
+    _didLoad = true;
+  }
+
+  Future<void> _loadRecipe(String recipeId) async {
+    final recipe = await ApiService.instance.fetchRecipe(recipeId);
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _titleController.text = recipe.title;
+      _ingredientsController.text = recipe.ingredients
+          .map((item) => item.name)
+          .join(', ');
+      _prepTimeController.text = recipe.duration.replaceAll('min', '').trim();
+      _servingsController.text = recipe.servings.toString();
+      _selectedCuisine = recipe.tags.firstWhere(
+        (tag) => [
+          'Turkish',
+          'Italian',
+          'French',
+          'Healthy',
+          'Athlete',
+          'Other',
+        ].contains(tag),
+        orElse: () => 'Other',
+      );
+    });
+  }
+
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate() || _isPublishing) {
+      return;
+    }
 
-    final provider = context.read<RecipeProvider>();
+    setState(() {
+      _isPublishing = true;
+    });
 
-    final rawIngredients = _ingredientsController.text
-        .split('\n')
-        .map((l) => l.trim())
-        .where((l) => l.isNotEmpty)
-        .map((l) => {'name': l, 'amountPerServing': 1.0, 'unit': ''})
-        .toList();
+    try {
+      if (_isEditing) {
+        await ApiService.instance.updateRecipe(
+          recipeId: _editingRecipeId!,
+          title: _titleController.text.trim(),
+          ingredients: _ingredientsController.text.trim(),
+          cuisine: _selectedCuisine,
+          prepTime: _prepTimeController.text.trim(),
+          servings: _servingsController.text.trim(),
+        );
 
-    final steps = _stepsController.text
-        .split('\n')
-        .map((l) => l.trim())
-        .where((l) => l.isNotEmpty)
-        .toList();
+        if (!mounted) {
+          return;
+        }
 
-    final recipe = await provider.createRecipe(
-      title: _titleController.text.trim(),
-      description: _descController.text.trim(),
-      cuisine: _selectedCuisine,
-      duration: '${_prepTimeController.text.trim()} min',
-      servings: int.tryParse(_servingsController.text.trim()) ?? 2,
-      steps: steps.isEmpty ? ['Prepare and cook as described.'] : steps,
-      ingredients: rawIngredients,
-      tags: [_selectedCuisine],
-    );
+        showSuccessDialog(
+          context: context,
+          title: 'Recipe Updated',
+          message: 'Your recipe changes are now saved in Firestore.',
+          onPressed: () {
+            Navigator.pushReplacementNamed(
+              context,
+              AppRoutes.recipeDetail,
+              arguments: _editingRecipeId,
+            );
+          },
+        );
+        return;
+      }
 
-    if (!mounted) return;
+      final recipe = await ApiService.instance.createRecipe(
+        title: _titleController.text.trim(),
+        ingredients: _ingredientsController.text.trim(),
+        cuisine: _selectedCuisine,
+        prepTime: _prepTimeController.text.trim(),
+        servings: _servingsController.text.trim(),
+      );
 
-    if (recipe != null) {
+      await ApiService.instance.createCommunityPost(
+        author: '@me',
+        title: recipe.title,
+        description: recipe.description,
+        recipeSlug: recipe.id,
+        imageUrl: recipe.imageUrl,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
       showSuccessDialog(
         context: context,
         title: 'Recipe Published',
         message: 'Your recipe has been shared with the community.',
         onPressed: () {
-          Navigator.pushNamedAndRemoveUntil(
+          Navigator.pushReplacementNamed(
             context,
-            AppRoutes.community,
-            (_) => false,
+            AppRoutes.recipeDetail,
+            arguments: recipe.id,
           );
         },
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.error ?? 'Could not publish recipe.')),
-      );
+    } on ApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isPublishing = false;
+        });
+      }
     }
   }
 
@@ -92,12 +173,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       'Turkish',
       'Italian',
       'French',
-      'Mexican',
-      'Asian',
       'Healthy',
+      'Athlete',
       'Other',
     ];
-    final isPublishing = context.watch<RecipeProvider>().loading;
 
     return ChefPage(
       child: Column(
@@ -105,10 +184,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         children: [
           const AppBackButton(),
           const SizedBox(height: AppSpacing.sm),
-          Text('Post a Recipe', style: AppTextStyles.display),
+          Text(
+            _isEditing ? 'Edit Recipe' : 'Post a Recipe',
+            style: AppTextStyles.display,
+          ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Share a dish you love with the community.',
+            _isEditing
+                ? 'Update your recipe and keep the community post in sync.'
+                : 'Share a dish you love with the community.',
             style: AppTextStyles.subtitle,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -124,19 +208,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   decoration: const InputDecoration(
                     hintText: 'e.g. Creamy Menemen',
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Title is required'
-                      : null,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text('DESCRIPTION', style: AppTextStyles.sectionLabel),
-                const SizedBox(height: AppSpacing.xs),
-                TextFormField(
-                  controller: _descController,
-                  maxLines: 2,
-                  decoration: const InputDecoration(
-                    hintText: 'A short description of your recipe...',
-                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Title is required';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text('CUISINE', style: AppTextStyles.sectionLabel),
@@ -148,35 +225,29 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     return InfoChip(
                       label: cuisine,
                       isActive: _selectedCuisine == cuisine,
-                      onTap: () => setState(() => _selectedCuisine = cuisine),
+                      onTap: () {
+                        setState(() {
+                          _selectedCuisine = cuisine;
+                        });
+                      },
                     );
                   }).toList(),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                Text(
-                  'INGREDIENTS (one per line)',
-                  style: AppTextStyles.sectionLabel,
-                ),
+                Text('INGREDIENTS', style: AppTextStyles.sectionLabel),
                 const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _ingredientsController,
                   maxLines: 4,
                   decoration: const InputDecoration(
-                    hintText: 'Eggs\nTomatoes\nOnion\nOlive oil',
+                    hintText: 'Eggs, tomatoes, onion, olive oil...',
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Ingredients are required'
-                      : null,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text('STEPS (one per line)', style: AppTextStyles.sectionLabel),
-                const SizedBox(height: AppSpacing.xs),
-                TextFormField(
-                  controller: _stepsController,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    hintText: 'Heat oil in pan\nAdd tomatoes\nCrack eggs...',
-                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Ingredients are required';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Row(
@@ -188,8 +259,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         decoration: const InputDecoration(
                           hintText: 'Prep time (min)',
                         ),
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? 'Required' : null,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Required';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -198,8 +273,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                         controller: _servingsController,
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(hintText: 'Servings'),
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? 'Required' : null,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Required';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
@@ -209,8 +288,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           ),
           const SizedBox(height: AppSpacing.lg),
           ElevatedButton(
-            onPressed: isPublishing ? null : _submit,
-            child: Text(isPublishing ? 'Publishing...' : 'Publish Recipe'),
+            onPressed: _isPublishing ? null : _submit,
+            child: Text(
+              _isPublishing
+                  ? (_isEditing ? 'Saving...' : 'Publishing...')
+                  : (_isEditing ? 'Save Changes' : 'Publish Recipe'),
+            ),
           ),
         ],
       ),

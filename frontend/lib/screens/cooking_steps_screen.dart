@@ -21,7 +21,9 @@ class _CookingStepsScreenState extends State<CookingStepsScreen> {
 
   String get _slug {
     final arguments = ModalRoute.of(context)?.settings.arguments;
-    return arguments is String && arguments.isNotEmpty ? arguments : 'menemen';
+    return arguments is String && arguments.isNotEmpty
+        ? arguments
+        : 'feta-menemen';
   }
 
   @override
@@ -122,7 +124,12 @@ class _CookingStepsScreenState extends State<CookingStepsScreen> {
               }),
               const SizedBox(height: AppSpacing.md),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  await ApiService.instance.incrementCookedMeals();
+                  if (!context.mounted) {
+                    return;
+                  }
+
                   showSuccessDialog(
                     context: context,
                     title: 'Recipe Complete',

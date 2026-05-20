@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../models/firestore_models.dart';
-import '../services/firestore_service.dart';
+import '../models/app_models.dart';
+import '../routes/app_routes.dart';
+import '../services/api_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_spacing.dart';
 import '../utils/app_text_styles.dart';
@@ -10,69 +11,81 @@ import '../widgets/common_widgets.dart';
 class SavedRecipesScreen extends StatelessWidget {
   const SavedRecipesScreen({super.key});
 
+  Future<void> _removeSaved(BuildContext context, SavedRecipe recipe) async {
+    try {
+      await ApiService.instance.removeSavedRecipe(recipe.recipeSlug);
+    } on ApiException catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChefPage(
-      child: StreamBuilder<List<SavedRecipeDoc>>(
-        stream: FirestoreService.instance.streamSavedRecipes(),
+      showBottomNav: false,
+      child: StreamBuilder<List<SavedRecipe>>(
+        stream: ApiService.instance.watchSavedRecipes(),
         builder: (context, snapshot) {
-          final saved = snapshot.data ?? [];
+          final savedRecipes = snapshot.data ?? const <SavedRecipe>[];
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const AppBackButton(),
               const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text('Saved Recipes', style: AppTextStyles.display),
-                  ),
-                  InfoChip(label: '${saved.length}', isActive: true),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
-                'Recipes you have bookmarked.',
-                style: AppTextStyles.subtitle,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              if (snapshot.connectionState == ConnectionState.waiting)
+              Text('Saved Recipes', style: AppTextStyles.display),
+              const SizedBox(height: AppSpacing.md),
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  savedRecipes.isEmpty)
                 const SizedBox(
                   height: 320,
                   child: Center(child: CircularProgressIndicator()),
                 )
               else if (snapshot.hasError)
-                Text('Could not load saved recipes.', style: AppTextStyles.body)
-              else if (saved.isEmpty)
-                Card(
-                  color: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(22),
-                    side: const BorderSide(color: AppColors.border),
-                  ),
+                Text(
+                  'Saved recipes could not be loaded.',
+                  style: AppTextStyles.body,
+                )
+              else if (savedRecipes.isEmpty)
+                Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Row(
+                    padding: const EdgeInsets.all(AppSpacing.xl),
+                    child: Column(
                       children: [
-                        const Icon(Icons.bookmark_border, size: 36),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            'No saved recipes yet.\nTap the bookmark icon on any recipe.',
-                            style: AppTextStyles.body,
-                          ),
+                        const Icon(
+                          Icons.bookmark_border,
+                          size: 64,
+                          color: AppColors.textMuted,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          'No saved recipes yet',
+                          style: AppTextStyles.title,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          'Save recipes from Community or Recipe Detail to see them here.',
+                          style: AppTextStyles.caption,
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
                   ),
                 )
               else
-                ...saved.map(
+                ...savedRecipes.map(
                   (recipe) => Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: _SavedRecipeCard(recipe: recipe),
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _SavedRecipeCard(
+                      recipe: recipe,
+                      onRemove: () => _removeSaved(context, recipe),
+                    ),
                   ),
                 ),
             ],
@@ -84,9 +97,10 @@ class SavedRecipesScreen extends StatelessWidget {
 }
 
 class _SavedRecipeCard extends StatelessWidget {
-  const _SavedRecipeCard({required this.recipe});
+  const _SavedRecipeCard({required this.recipe, required this.onRemove});
 
-  final SavedRecipeDoc recipe;
+  final SavedRecipe recipe;
+  final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -94,80 +108,83 @@ class _SavedRecipeCard extends StatelessWidget {
       color: Colors.white,
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         side: const BorderSide(color: AppColors.border),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: recipe.imageUrl.isNotEmpty
-                  ? Image.network(
-                      recipe.imageUrl,
-                      width: 72,
-                      height: 72,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, err, stack) => _placeholder(),
-                    )
-                  : _placeholder(),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    recipe.title,
-                    style: AppTextStyles.body.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: AppColors.primarySoft,
+                  child: Text(recipe.author.substring(1, 2).toUpperCase()),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        recipe.author,
+                        style: AppTextStyles.body.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(recipe.role, style: AppTextStyles.caption),
+                    ],
                   ),
-                  if (recipe.subtitle.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(recipe.subtitle, style: AppTextStyles.caption),
-                  ],
-                  const SizedBox(height: 4),
-                  Text(recipe.author, style: AppTextStyles.caption),
-                ],
-              ),
+                ),
+                IconButton(
+                  onPressed: onRemove,
+                  icon: const Icon(Icons.bookmark, color: AppColors.primary),
+                ),
+              ],
             ),
-            IconButton(
-              icon: const Icon(
-                Icons.bookmark,
-                color: AppColors.primary,
-                size: 22,
-              ),
-              onPressed: () async {
-                await FirestoreService.instance.unsaveRecipe(recipe.recipeId);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${recipe.title} removed from saved.'),
-                    ),
-                  );
-                }
+            const SizedBox(height: AppSpacing.md),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.recipeDetail,
+                  arguments: recipe.recipeSlug,
+                );
               },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.network(
+                  recipe.imageUrl,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      'assets/images/community-bowl.jpg',
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    );
+                  },
+                ),
+              ),
             ),
+            const SizedBox(height: AppSpacing.md),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.recipeDetail,
+                  arguments: recipe.recipeSlug,
+                );
+              },
+              child: Text(recipe.title, style: AppTextStyles.title),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(recipe.description, style: AppTextStyles.caption),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _placeholder() {
-    return Container(
-      width: 72,
-      height: 72,
-      decoration: BoxDecoration(
-        color: AppColors.warmAccent,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: const Icon(
-        Icons.restaurant_menu,
-        size: 32,
-        color: AppColors.textMuted,
       ),
     );
   }

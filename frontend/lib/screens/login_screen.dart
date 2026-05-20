@@ -28,25 +28,52 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _isSubmitting) return;
+    if (!_formKey.currentState!.validate() || _isSubmitting) {
+      return;
+    }
 
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _isSubmitting = true;
+    });
 
-    final auth = context.read<AuthProvider>();
-    final ok = await auth.login(
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
+    try {
+      await context.read<AuthProvider>().login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
 
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
+      if (!mounted) {
+        return;
+      }
 
-    if (ok) {
-      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false);
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(auth.error ?? 'Login failed.')));
+      showSuccessDialog(
+        context: context,
+        title: 'Welcome Back',
+        message: 'Login succeeded and Firebase connection is active.',
+        onPressed: () {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.home,
+            (route) => false,
+          );
+        },
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -57,16 +84,59 @@ class _LoginScreenState extends State<LoginScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: AppSpacing.sm),
-          _AuthToggle(
-            active: 'login',
-            onRegisterTap: () =>
-                Navigator.pushReplacementNamed(context, AppRoutes.register),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: const Color(0xFFE3DDD3)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF4D8),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      'Log In',
+                      style: AppTextStyles.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        AppRoutes.register,
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        'Register',
+                        style: AppTextStyles.body.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text('Welcome back', style: AppTextStyles.display),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Sign in to your ChefInPocket account.',
+            'Use your Firebase account to open your synced recipes, saves, and grocery list.',
             style: AppTextStyles.subtitle,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -83,13 +153,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: const InputDecoration(
                     hintText: 'you@example.com',
                   ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Email is required';
                     }
-                    if (!v.contains('@')) {
+
+                    if (!value.contains('@')) {
                       return 'Enter a valid email';
                     }
+
                     return null;
                   },
                 ),
@@ -102,9 +174,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   decoration: const InputDecoration(
                     hintText: 'Enter your password',
                   ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return 'Password is required';
-                    if (v.length < 6) return 'Use at least 6 characters';
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Password is required';
+                    }
+
+                    if (value.length < 6) {
+                      return 'Use at least 6 characters';
+                    }
+
                     return null;
                   },
                   onFieldSubmitted: (_) => _submit(),
@@ -115,80 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: AppSpacing.lg),
           ElevatedButton(
             onPressed: _isSubmitting ? null : _submit,
-            child: Text(_isSubmitting ? 'Signing in...' : 'Log In'),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Center(
-            child: GestureDetector(
-              onTap: () =>
-                  Navigator.pushReplacementNamed(context, AppRoutes.register),
-              child: Text(
-                "Don't have an account? Register",
-                style: AppTextStyles.caption.copyWith(
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AuthToggle extends StatelessWidget {
-  const _AuthToggle({required this.active, required this.onRegisterTap});
-
-  final String active;
-  final VoidCallback onRegisterTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFE3DDD3)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: active == 'login'
-                    ? const Color(0xFFFFF4D8)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                'Log In',
-                style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: onRegisterTap,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: active == 'register'
-                      ? const Color(0xFFFFF4D8)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  'Register',
-                  style: AppTextStyles.body.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
+            child: Text(_isSubmitting ? 'Logging in...' : 'Log In'),
           ),
         ],
       ),

@@ -30,13 +30,43 @@ class AppTheme {
 
     return base.copyWith(
       textTheme: base.textTheme.copyWith(
-        displayLarge: AppTextStyles.display,
-        headlineMedium: AppTextStyles.title,
-        titleLarge: AppTextStyles.title,
-        bodyLarge: AppTextStyles.body,
-        bodyMedium: AppTextStyles.body,
-        bodySmall: AppTextStyles.caption,
-        labelLarge: AppTextStyles.sectionLabel,
+        displayLarge: base.textTheme.displayLarge?.copyWith(
+          fontFamily: AppTextStyles.bodyFont,
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+          height: 1.15,
+        ),
+        headlineMedium: base.textTheme.headlineMedium?.copyWith(
+          fontFamily: AppTextStyles.displayFont,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          height: 1.1,
+        ),
+        titleLarge: base.textTheme.titleLarge?.copyWith(
+          fontFamily: AppTextStyles.displayFont,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          height: 1.1,
+        ),
+        bodyLarge: base.textTheme.bodyLarge?.copyWith(
+          fontSize: 14,
+          height: 1.45,
+        ),
+        bodyMedium: base.textTheme.bodyMedium?.copyWith(
+          fontSize: 14,
+          height: 1.45,
+        ),
+        bodySmall: base.textTheme.bodySmall?.copyWith(
+          fontSize: 12,
+          height: 1.4,
+          color: AppColors.textMuted,
+        ),
+        labelLarge: base.textTheme.labelLarge?.copyWith(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.4,
+          color: AppColors.textMuted,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -120,16 +150,47 @@ class AppTheme {
 
     return base.copyWith(
       textTheme: base.textTheme.copyWith(
-        displayLarge: AppTextStyles.display.copyWith(color: Colors.white),
-        headlineMedium: AppTextStyles.title.copyWith(color: Colors.white),
-        titleLarge: AppTextStyles.title.copyWith(color: Colors.white),
-        bodyLarge: AppTextStyles.body.copyWith(color: Colors.white),
-        bodyMedium: AppTextStyles.body.copyWith(color: Colors.white),
-        bodySmall: AppTextStyles.caption.copyWith(
-          color: const Color(0xFFC6C6C6),
+        displayLarge: base.textTheme.displayLarge?.copyWith(
+          fontFamily: AppTextStyles.bodyFont,
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+          height: 1.15,
+          color: Colors.white,
         ),
-        labelLarge: AppTextStyles.sectionLabel.copyWith(
-          color: const Color(0xFFC6C6C6),
+        headlineMedium: base.textTheme.headlineMedium?.copyWith(
+          fontFamily: AppTextStyles.displayFont,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          height: 1.1,
+          color: Colors.white,
+        ),
+        titleLarge: base.textTheme.titleLarge?.copyWith(
+          fontFamily: AppTextStyles.displayFont,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          height: 1.1,
+          color: Colors.white,
+        ),
+        bodyLarge: base.textTheme.bodyLarge?.copyWith(
+          fontSize: 14,
+          height: 1.45,
+          color: Colors.white,
+        ),
+        bodyMedium: base.textTheme.bodyMedium?.copyWith(
+          fontSize: 14,
+          height: 1.45,
+          color: Colors.white,
+        ),
+        bodySmall: base.textTheme.bodySmall?.copyWith(
+          fontSize: 12,
+          height: 1.4,
+          color: const Color(0xFFB7B7B7),
+        ),
+        labelLarge: base.textTheme.labelLarge?.copyWith(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.4,
+          color: const Color(0xFFB7B7B7),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -139,36 +200,19 @@ class AppTheme {
           horizontal: 16,
           vertical: 16,
         ),
-        hintStyle: AppTextStyles.body.copyWith(color: const Color(0xFFC6C6C6)),
+        hintStyle: AppTextStyles.body.copyWith(color: const Color(0xFFB7B7B7)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFF343434)),
+          borderSide: const BorderSide(color: Color(0xFF2F2F2F)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFF343434)),
+          borderSide: const BorderSide(color: Color(0xFF2F2F2F)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
         ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-          minimumSize: const Size.fromHeight(54),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-          ),
-        ),
-      ),
-      snackBarTheme: SnackBarThemeData(
-        backgroundColor: const Color(0xFF242424),
-        contentTextStyle: AppTextStyles.body.copyWith(color: Colors.white),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }

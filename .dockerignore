@@ -1,0 +1,17 @@
+.DS_Store
+.git
+.gitignore
+.idea
+.vscode
+
+**/node_modules
+**/.dart_tool
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/build
+**/.packages
+**/.pub-cache
+
+frontend/ios/Flutter/ephemeral
+frontend/macos/Flutter/ephemeral
+backend/**/npm-debug.log*

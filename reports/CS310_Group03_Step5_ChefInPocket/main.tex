@@ -1,0 +1,263 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[top=2.2cm,bottom=2.2cm,left=2cm,right=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+\usepackage{parskip}
+
+\definecolor{accent}{RGB}{37,99,235}
+\definecolor{seccolor}{RGB}{30,30,30}
+\definecolor{muted}{RGB}{140,133,124}
+\definecolor{border}{RGB}{227,221,211}
+
+\titleformat{\section}{\large\bfseries\color{seccolor}}{}{0em}{}[\color{border}\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+\titlespacing{\section}{0pt}{18pt}{8pt}
+\titlespacing{\subsection}{0pt}{12pt}{4pt}
+
+\pagestyle{fancy}\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\small\textcolor{muted}{CS310 --- Mobile Application Development}}
+\fancyhead[R]{\small\textcolor{muted}{ChefInPocket · Final Report}}
+\fancyfoot[C]{\small\thepage}
+
+\setlist[itemize]{noitemsep,topsep=3pt,leftmargin=1.4em}
+\setlist[enumerate]{noitemsep,topsep=3pt,leftmargin=1.4em}
+\captionsetup{font=small,labelfont=bf,skip=4pt}
+
+\newcommand{\phonepair}[4]{%
+  \begin{figure}[H]
+    \centering
+    \begin{minipage}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width=0.86\linewidth]{#1}\\[4pt]
+      {\small\bfseries #2}
+    \end{minipage}\hfill
+    \begin{minipage}[t]{0.48\textwidth}
+      \centering
+      \includegraphics[width=0.86\linewidth]{#3}\\[4pt]
+      {\small\bfseries #4}
+    \end{minipage}
+  \end{figure}
+}
+
+\newcommand{\phonesingle}[2]{%
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.34\textwidth]{#1}
+    \caption{#2}
+  \end{figure}
+}
+
+\newcommand{\widefigure}[2]{%
+  \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.96\textwidth]{#1}
+    \caption{#2}
+  \end{figure}
+}
+
+\begin{document}
+
+\begin{center}
+  {\large\bfseries CS310 --- Mobile Application Development}\\[4pt]
+  {\large [Spring 2025--2026] Project Step 5: Final Touches \& Tests}\\[4pt]
+  {\large Group 03 · \textbf{ChefInPocket}}
+\end{center}
+
+\medskip
+\noindent\textcolor{border}{\rule{\linewidth}{0.4pt}}
+\medskip
+
+\section{Project Title and Team Information}
+
+\textbf{Project Title:} ChefInPocket\\
+\textbf{Course:} CS310 --- Mobile Application Development\\
+\textbf{Term:} Spring 2025--2026\\
+\textbf{Project Scope:} Final Touches, Testing, Firebase Integration, and Documentation
+
+\begin{center}
+\begin{tabularx}{0.96\textwidth}{>{\bfseries}l c X}
+\toprule
+Team Member & ID & Main Contribution Area \\
+\midrule
+Mehmet Selman Y{\i}lmaz & 31158 & AI flow, Firebase stabilization, testing, final integration \\
+Cem Ozkul & 34183 & Authentication support, data verification, quality assurance \\
+Emir Keskin & 31020 & Recipe content flow, repository coordination, integration support \\
+Semse Doga Atilgan & 34450 & Community and grocery flow support, presentation materials \\
+Nilsu Saraclar & 34210 & Home UI, cuisine discovery, visual consistency \\
+Bora Demirkol & 32361 & Profile flow, navigation structure, cross-feature integration \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The team worked collaboratively on integration, testing, debugging, and polishing to prepare a stable final submission.
+
+\section{Application Overview and Objectives}
+
+ChefInPocket is a Flutter-based mobile application that helps users decide what to cook by starting from the ingredients they already have. Instead of requiring users to browse large recipe lists manually, the application focuses on ingredient-driven recipe matching, guided cooking, community interaction, and AI-assisted support.
+
+The main objective of the project was to transform the initial concept and UI prototype into a stable, data-driven product that includes authentication, persistent cloud storage, reactive state updates, protected navigation, and test coverage. From a user-experience perspective, the goal was to reduce friction between ``I already have these ingredients'' and ``I know what to cook.'' From a software engineering perspective, the goal was to establish a maintainable Flutter architecture with reusable widgets, provider-based state management, and Firebase-backed persistence.
+
+\section{List of Implemented Features}
+
+\begin{itemize}
+  \item User registration, login, logout, and authentication-aware navigation
+  \item Protected access to application screens after authentication
+  \item Home dashboard with search, cuisine discovery, and quick access shortcuts
+  \item Ingredient-based recipe filtering and cuisine-based recipe browsing
+  \item Recipe detail screen with save, serving scale, customization, and cooking flow
+  \item Retrieval-assisted Chef AI chat for recipe-related questions
+  \item Grocery list creation, update, deletion, and live synchronization
+  \item Community feed with searchable posts, public profile navigation, and save support
+  \item User profile, saved recipes, my recipes, and theme preference management
+  \item Firebase-backed persistence with Firestore streams and ownership-aware security rules
+  \item Provider-based application state management
+  \item SharedPreferences-based local persistence for theme mode
+  \item One meaningful unit test and one meaningful widget test
+\end{itemize}
+
+\section{Screenshots of Important Screens and Features}
+
+\phonepair{figures/login.png}{Login screen with email-password authentication}{figures/register.png}{Registration screen with validated user input}
+
+\phonepair{figures/home.png}{Home dashboard with cuisine discovery and bottom navigation}{figures/recipe_results.png}{Cuisine-filtered recipe results for the Turkish category}
+
+\phonepair{figures/recipe_detail.png}{Recipe detail screen with tools and guided cooking entry}{figures/ai_chat.png}{Chef AI screen showing retrieval-based assistance}
+
+\phonepair{figures/community.png}{Community feed with save, search, and content filters}{figures/grocery.png}{Grocery list with real-time item management}
+
+\phonesingle{figures/profile.png}{Profile screen with user information, saved metrics, and dark mode preference}
+
+\section{Firebase Usage}
+
+\subsection{Firebase Authentication}
+
+Firebase Authentication is used for secure email-password sign-up and login. Unauthenticated users are redirected to onboarding, login, and registration screens, while authenticated users are allowed to access the main application routes. Authentication state changes are observed through the provider layer so that the visible navigation tree updates automatically after login or logout.
+
+\widefigure{figures/firebase_auth_console.png}{Firebase Authentication console showing registered ChefInPocket users}
+
+\subsection{Cloud Firestore Database}
+
+Cloud Firestore is the primary database layer of the application. The following core collections are used:
+
+\begin{itemize}
+  \item \texttt{users}
+  \item \texttt{recipes}
+  \item \texttt{community\_posts}
+  \item \texttt{saved\_recipes}
+  \item \texttt{grocery\_items}
+  \item \texttt{assistant\_messages}
+\end{itemize}
+
+Each document contains application-specific fields together with ownership and timestamp metadata such as \texttt{id}, \texttt{createdBy}, and \texttt{createdAt}. CRUD operations are implemented through the service layer, and multiple screens use Firestore streams so the UI refreshes immediately when data changes.
+
+\widefigure{figures/firestore_collection.png}{Firestore collections and user document structure used by the application}
+
+\subsection{Firebase Storage}
+
+The current repository uses a hybrid demo media strategy based on local assets and seeded network image URLs so that the application remains stable during demonstration. However, the long-term media architecture is designed around Firebase Storage as the dedicated source for user-uploaded recipe images. In other words, the UI and data model are already compatible with future migration to Storage-backed download URLs.
+
+\subsection{Security Rules}
+
+Firestore security rules were defined to protect private user data and enforce ownership checks for user-generated collections such as saved recipes, grocery items, and assistant message history. Public content such as recipe browsing and community reading remains readable where appropriate, while write access is restricted to authenticated owners.
+
+\section{State Management Approach}
+
+The application uses \textbf{Provider with ChangeNotifier} as its primary state management solution. This decision was made because Provider is lightweight, readable, and appropriate for a course project where maintainability and clarity matter.
+
+The final project separates responsibilities across three providers:
+
+\begin{itemize}
+  \item \texttt{AuthProvider} manages login state, logout, and authentication-aware UI updates.
+  \item \texttt{AppDataProvider} manages shared content, ingredient data, and recipe stream binding.
+  \item \texttt{PreferencesProvider} manages local preference persistence, especially dark mode.
+\end{itemize}
+
+This structure avoids passing shared state deeply through widget constructors. Instead, screens observe state through provider access and Firestore streams, which keeps the architecture cleaner and more reactive.
+
+\section{Testing and Validation}
+
+The final submission includes both required test types:
+
+\begin{itemize}
+  \item \textbf{Unit Test:} \texttt{recipe\_logic\_test.dart} verifies core recipe filtering behavior, including ingredient matching and cuisine-tag-sensitive filtering.
+  \item \textbf{Widget Test:} \texttt{login\_screen\_test.dart} verifies login form rendering, validation behavior, and interaction with the authentication provider.
+\end{itemize}
+
+In addition to automated tests, the application was verified manually on a physical iPhone device to validate navigation flow, Firebase integration, and major user-facing interactions.
+
+\widefigure{figures/tests_terminal.png}{Terminal output confirming that \texttt{flutter analyze} and \texttt{flutter test} completed successfully}
+
+\section{Challenges Encountered During Development}
+
+\subsection{Challenge 1: Synchronizing Authentication with Protected Navigation}
+
+One of the first integration challenges was making sure the visible screen tree changed automatically depending on authentication state. A direct navigation-only solution quickly became hard to manage, especially when login, logout, and app restart flows had to be handled consistently.
+
+\textbf{Solution:} We introduced a dedicated authentication provider and an entry-screen approach that listens to Firebase authentication changes. This made route protection explicit and allowed the UI to react automatically when the user state changed.
+
+\subsection{Challenge 2: Stabilizing Firestore Permissions and Seeded Data Flow}
+
+During final integration, some screens showed loading or permission issues because the seeded app data and Firestore security rules had to work together under authenticated access.
+
+\textbf{Solution:} We aligned the Firestore rules with the application data model, deployed the rules to the live Firebase project, and adjusted the service layer so profile synchronization and seeded recipe creation would behave more predictably across sessions.
+
+\subsection{Challenge 3: Connecting AI Interaction to Real App Data}
+
+The AI assistant needed to produce answers that were relevant to the selected recipe context instead of returning generic chat responses.
+
+\textbf{Solution:} We implemented a retrieval-oriented assistant flow that uses recipe context and relevant recipe content before generating the reply. This kept the assistant grounded in the data already available inside the application and created a stronger connection between UI and domain logic.
+
+\section{Lessons Learned from the Project and Teamwork Experience}
+
+This project demonstrated that architectural discipline becomes increasingly important once a mobile app grows beyond a few screens. Early decisions about routing, state ownership, and reusable components had a major impact on how smoothly Firebase integration and final testing could be completed.
+
+We also learned that debugging cloud-connected applications requires both code-level reasoning and configuration-level verification. Several late-stage issues were not caused by Flutter widgets themselves, but by Firebase project setup, Firestore permissions, and runtime integration details.
+
+From a teamwork perspective, the project reinforced the value of clear feature ownership, continuous communication, and shared testing responsibility. Dividing work by modules reduced overlap, while final integration required the whole group to coordinate around consistency, stability, and presentation quality.
+
+\section{Clear Breakdown of Individual Contributions}
+
+\begin{center}
+\begin{tabularx}{0.96\textwidth}{>{\bfseries}l X}
+\toprule
+Team Member & Contribution Summary \\
+\midrule
+Mehmet Selman Y{\i}lmaz & Chef AI flow, Firebase-related debugging, test integration, final report preparation, and end-to-end stabilization on iOS \\
+Cem Ozkul & Authentication support, recipe filtering checks, validation support, and contribution to quality assurance during final testing \\
+Emir Keskin & Recipe and content flow support, coordination of seeded data and community-facing content, and general integration assistance \\
+Semse Doga Atilgan & Community and grocery-related UI support, screenshot preparation, demo support, and visual review \\
+Nilsu Saraclar & Home screen direction, cuisine discovery experience, layout consistency, and UX polishing support \\
+Bora Demirkol & Profile-related flow support, navigation consistency, organization of cross-screen behavior, and final integration review \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+All team members also contributed to group discussions, testing feedback, and final presentation preparation.
+
+\section{Repository and Video Links}
+
+\textbf{GitHub Repository Link:} \href{https://github.com/mesely/ChefInPocket.git}{ChefInPocket GitHub Repository}\\
+\textbf{Video Demonstration Link:} \href{https://drive.google.com/file/d/1mq7al5-YKul97OcmdqHyZZJg-OTXAfuq/view?usp=sharing}{ChefInPocket Final Demonstration Video}
+
+\section{Conclusion}
+
+ChefInPocket successfully evolved from a UI-oriented concept into a functional Flutter application backed by Firebase Authentication, Cloud Firestore, Provider-based state management, and automated tests. The final application integrates the features from previous project steps into one stable flow: authentication, discovery, recipe viewing, AI assistance, grocery management, community interaction, and profile management.
+
+Although future work remains for fully production-ready media upload infrastructure and broader AI backend expansion, the current final submission already demonstrates the core technical goals of the course: clean Flutter organization, cloud integration, state synchronization, responsive UI behavior, and meaningful testing support.
+
+\end{document}

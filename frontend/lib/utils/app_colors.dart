@@ -28,4 +28,36 @@ class AppColors {
   // Status colors
   static const success = Color(0xFF1B8D4A);
   static const danger = Color(0xFFD64545);
+
+  static bool isDark(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
+  static Color pageBackground(BuildContext context) {
+    return isDark(context) ? const Color(0xFF111111) : background;
+  }
+
+  static Color surface(BuildContext context) {
+    return isDark(context) ? const Color(0xFF1A1A1A) : Colors.white;
+  }
+
+  static Color softSurface(BuildContext context) {
+    return isDark(context) ? const Color(0xFF202020) : const Color(0xFFF5F1E9);
+  }
+
+  static Color borderColor(BuildContext context) {
+    return isDark(context) ? const Color(0xFF2F2F2F) : border;
+  }
+
+  static Color primaryText(BuildContext context) {
+    return isDark(context) ? Colors.white : textPrimary;
+  }
+
+  static Color mutedText(BuildContext context) {
+    return isDark(context) ? const Color(0xFFB7B7B7) : textMuted;
+  }
+
+  static Color activeChipBackground(BuildContext context) {
+    return isDark(context) ? const Color(0xFF163B78) : primarySoft;
+  }
 }

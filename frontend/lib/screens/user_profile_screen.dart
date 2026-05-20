@@ -8,61 +8,31 @@ import '../utils/app_spacing.dart';
 import '../utils/app_text_styles.dart';
 import '../widgets/common_widgets.dart';
 
-class UserProfileScreen extends StatefulWidget {
+class UserProfileScreen extends StatelessWidget {
   const UserProfileScreen({super.key});
 
   @override
-  State<UserProfileScreen> createState() => _UserProfileScreenState();
-}
-
-class _UserProfileScreenState extends State<UserProfileScreen> {
-  late Future<List<Recipe>> _recipesFuture;
-  bool _didLoad = false;
-
-  String get _username {
-    final arguments = ModalRoute.of(context)?.settings.arguments;
-    return arguments is String && arguments.isNotEmpty ? arguments : '@user';
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_didLoad) {
-      _recipesFuture = _loadRecipes();
-      _didLoad = true;
-    }
-  }
-
-  Future<List<Recipe>> _loadRecipes() async {
-    final posts = await ApiService.instance.fetchCommunityPosts();
-    final recipeSlugs = posts
-        .where((post) => post.author == _username && post.recipeSlug != null)
-        .map((post) => post.recipeSlug!)
-        .toList();
-
-    return ApiService.instance.fetchRecipesBySlugs(recipeSlugs);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final bareName = _username.replaceFirst('@', '');
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+    final username = arguments is String && arguments.isNotEmpty
+        ? arguments
+        : '@user';
+    final bareName = username.replaceFirst('@', '');
     final displayName = bareName.isEmpty
         ? 'User'
         : bareName.characters.first.toUpperCase() + bareName.substring(1);
 
     return ChefPage(
-      child: FutureBuilder<List<Recipe>>(
-        future: _recipesFuture,
+      child: StreamBuilder<List<Recipe>>(
+        stream: ApiService.instance.watchRecipesByAuthor(username),
         builder: (context, snapshot) {
           final recipes = snapshot.data ?? const <Recipe>[];
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back_ios_new),
-              ),
+              const AppBackButton(),
+              const SizedBox(height: AppSpacing.sm),
               Center(
                 child: Column(
                   children: [
@@ -75,7 +45,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          _username.substring(1, 2).toUpperCase(),
+                          username.substring(1, 2).toUpperCase(),
                           style: AppTextStyles.display,
                         ),
                       ),
@@ -83,7 +53,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     const SizedBox(height: AppSpacing.sm),
                     Text(displayName, style: AppTextStyles.title),
                     const SizedBox(height: 4),
-                    Text(_username, style: AppTextStyles.caption),
+                    Text(username, style: AppTextStyles.caption),
                   ],
                 ),
               ),
@@ -97,7 +67,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               const SizedBox(height: AppSpacing.lg),
               const AppSectionHeader(label: 'Recipes'),
               const SizedBox(height: AppSpacing.sm),
-              if (snapshot.connectionState == ConnectionState.waiting)
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  recipes.isEmpty)
                 const SizedBox(
                   height: 160,
                   child: Center(child: CircularProgressIndicator()),

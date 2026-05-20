@@ -33,6 +33,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
     return 'General';
   }
 
+  String? get _recipeSlug {
+    final arguments = ModalRoute.of(context)?.settings.arguments;
+    if (arguments is Map && arguments['slug'] is String) {
+      final slug = arguments['slug'] as String;
+      return slug.isEmpty ? null : slug;
+    }
+    return null;
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -82,6 +91,7 @@ class _AiChatScreenState extends State<AiChatScreen> {
       final reply = await ApiService.instance.sendAssistantMessage(
         context: _contextName,
         message: prompt,
+        recipeSlug: _recipeSlug,
       );
 
       if (!mounted) return;

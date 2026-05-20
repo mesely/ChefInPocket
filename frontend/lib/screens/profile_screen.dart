@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../models/app_models.dart';
 import '../providers/auth_provider.dart';
 import '../providers/preferences_provider.dart';
 import '../routes/app_routes.dart';
-import '../services/firestore_service.dart';
+import '../services/api_service.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_spacing.dart';
 import '../utils/app_text_styles.dart';
@@ -15,30 +16,36 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final prefs = context.watch<PreferencesProvider>();
-    final user = auth.user;
-
-    if (user == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    final fullName = user.displayName ?? 'Chef';
-    final email = user.email ?? '';
-    final initial = fullName.isNotEmpty ? fullName[0].toUpperCase() : 'C';
-    final handle = '@${email.split('@').first}';
+    final preferencesProvider = context.watch<PreferencesProvider>();
 
     return ChefPage(
       currentRoute: AppRoutes.profile,
       showBottomNav: true,
-      child: StreamBuilder(
-        stream: FirestoreService.instance.streamMyRecipes(),
-        builder: (context, myRecipesSnap) {
-          return StreamBuilder(
-            stream: FirestoreService.instance.streamSavedRecipes(),
-            builder: (context, savedSnap) {
-              final myCount = myRecipesSnap.data?.length ?? 0;
-              final savedCount = savedSnap.data?.length ?? 0;
+      child: StreamBuilder<UserProfile?>(
+        stream: ApiService.instance.watchProfile(),
+        builder: (context, profileSnapshot) {
+          if (profileSnapshot.connectionState == ConnectionState.waiting &&
+              !profileSnapshot.hasData) {
+            return const SizedBox(
+              height: 320,
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (!profileSnapshot.hasData) {
+            return Text(
+              'Profile could not be loaded.',
+              style: AppTextStyles.body,
+            );
+          }
+
+          final profile = profileSnapshot.data!;
+
+          return StreamBuilder<List<SavedRecipe>>(
+            stream: ApiService.instance.watchSavedRecipes(),
+            builder: (context, savedSnapshot) {
+              final savedCount =
+                  savedSnapshot.data?.length ?? profile.savedRecipes;
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,78 +54,100 @@ class ProfileScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         Container(
-                          width: 72,
-                          height: 72,
+                          width: 82,
+                          height: 82,
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFF4D8),
-                            borderRadius: BorderRadius.circular(24),
+                            borderRadius: BorderRadius.circular(26),
                           ),
                           child: Center(
-                            child: Text(initial, style: AppTextStyles.display),
+                            child: Text(
+                              _profileEmoji(profile.gender),
+                              style: const TextStyle(fontSize: 34),
+                            ),
                           ),
                         ),
                         const SizedBox(height: AppSpacing.sm),
-                        Text(fullName, style: AppTextStyles.title),
+                        Text(profile.fullName, style: AppTextStyles.title),
                         const SizedBox(height: 4),
-                        Text(handle, style: AppTextStyles.caption),
-                        const SizedBox(height: 2),
-                        Text(email, style: AppTextStyles.caption),
+                        Text(profile.username, style: AppTextStyles.caption),
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.lg),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _Metric(value: '$savedCount', label: 'saved'),
+                      _CompactMetric(value: '$savedCount', label: 'saved'),
                       const SizedBox(width: 24),
-                      _Metric(value: '$myCount', label: 'recipes'),
+                      _CompactMetric(
+                        value: '${profile.publishedRecipes}',
+                        label: 'recipes',
+                      ),
+                      const SizedBox(width: 24),
+                      _CompactMetric(
+                        value: '${profile.cookedMeals}',
+                        label: 'cooked',
+                      ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  ProfileMenuTile(
-                    title: 'My Recipes',
-                    subtitle: 'Recipes you have shared',
-                    icon: Icons.menu_book_outlined,
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.myRecipes),
-                  ),
-                  const SizedBox(height: 12),
-                  ProfileMenuTile(
-                    title: 'Saved Recipes',
-                    subtitle: 'Bookmarked recipes',
-                    icon: Icons.bookmark_outline,
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.savedRecipes),
-                  ),
-                  const SizedBox(height: 12),
-                  ProfileMenuTile(
-                    title: 'Grocery List',
-                    subtitle: 'Your shopping list',
-                    icon: Icons.shopping_basket_outlined,
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.groceryList),
-                  ),
-                  const SizedBox(height: 12),
-                  ProfileMenuTile(
-                    title: prefs.isDark ? 'Light Mode' : 'Dark Mode',
-                    subtitle: 'Toggle app theme',
-                    icon: prefs.isDark
-                        ? Icons.light_mode_outlined
-                        : Icons.dark_mode_outlined,
-                    onTap: () => prefs.toggleTheme(),
+                  _ProfileRow(label: 'Name', value: profile.fullName),
+                  const SizedBox(height: 10),
+                  _ProfileRow(label: 'Email', value: profile.email),
+                  const SizedBox(height: 10),
+                  _ProfileRow(
+                    label: 'Theme',
+                    value: preferencesProvider.isDarkMode ? 'Dark' : 'Light',
+                    trailing: Switch(
+                      value: preferencesProvider.isDarkMode,
+                      onChanged: preferencesProvider.setDarkMode,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: ProfileMenuTile(
+                      title: 'Saved Recipes',
+                      subtitle: 'Open your personal collection',
+                      icon: Icons.bookmark_outline,
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.savedRecipes),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: ProfileMenuTile(
+                      title: 'My Recipes',
+                      subtitle: 'Edit or delete your own recipes',
+                      icon: Icons.menu_book_outlined,
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.myRecipes),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: ProfileMenuTile(
+                      title: 'Grocery List',
+                      subtitle: 'Keep your ingredients in sync',
+                      icon: Icons.shopping_cart_checkout_outlined,
+                      onTap: () =>
+                          Navigator.pushNamed(context, AppRoutes.groceryList),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   OutlinedButton(
                     onPressed: () async {
-                      await auth.logout();
-                      if (context.mounted) {
-                        Navigator.pushNamedAndRemoveUntil(
-                          context,
-                          AppRoutes.onboarding,
-                          (_) => false,
-                        );
+                      await context.read<AuthProvider>().logout();
+                      if (!context.mounted) {
+                        return;
                       }
+
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        AppRoutes.appEntry,
+                        (route) => false,
+                      );
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.danger,
@@ -133,10 +162,21 @@ class ProfileScreen extends StatelessWidget {
       ),
     );
   }
+
+  String _profileEmoji(String gender) {
+    switch (gender) {
+      case 'female':
+        return '👩';
+      case 'male':
+        return '👨';
+      default:
+        return '🧑';
+    }
+  }
 }
 
-class _Metric extends StatelessWidget {
-  const _Metric({required this.value, required this.label});
+class _CompactMetric extends StatelessWidget {
+  const _CompactMetric({required this.value, required this.label});
 
   final String value;
   final String label;
@@ -151,6 +191,37 @@ class _Metric extends StatelessWidget {
         ),
         Text(label, style: AppTextStyles.caption),
       ],
+    );
+  }
+}
+
+class _ProfileRow extends StatelessWidget {
+  const _ProfileRow({required this.label, required this.value, this.trailing});
+
+  final String label;
+  final String value;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.borderColor(context)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(width: 14),
+          Expanded(child: Text(value, style: AppTextStyles.body)),
+          if (trailing != null) ...[trailing!],
+        ],
+      ),
     );
   }
 }

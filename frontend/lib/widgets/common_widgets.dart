@@ -27,7 +27,7 @@ class ChefPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.pageBackground(context),
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: showBottomNav && currentRoute != null
           ? AppBottomNav(currentRoute: currentRoute!)
@@ -92,9 +92,9 @@ class AppBottomNav extends StatelessWidget {
     ];
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        border: Border(top: BorderSide(color: AppColors.borderColor(context))),
       ),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
       child: Row(
@@ -115,7 +115,9 @@ class AppBottomNav extends StatelessWidget {
                   children: [
                     Icon(
                       item.icon,
-                      color: isActive ? AppColors.primary : AppColors.textMuted,
+                      color: isActive
+                          ? AppColors.primary
+                          : AppColors.mutedText(context),
                       size: 22,
                     ),
                     const SizedBox(height: 4),
@@ -124,7 +126,7 @@ class AppBottomNav extends StatelessWidget {
                       style: AppTextStyles.caption.copyWith(
                         color: isActive
                             ? AppColors.primary
-                            : AppColors.textMuted,
+                            : AppColors.mutedText(context),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -159,13 +161,13 @@ class AppSearchField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderColor(context)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.search, color: AppColors.textMuted),
+          Icon(Icons.search, color: AppColors.mutedText(context)),
           const SizedBox(width: 10),
           Expanded(
             child: TextField(
@@ -175,14 +177,16 @@ class AppSearchField extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: hint,
                 hintStyle: AppTextStyles.body.copyWith(
-                  color: AppColors.textMuted,
+                  color: AppColors.mutedText(context),
                 ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              style: AppTextStyles.body,
+              style: AppTextStyles.body.copyWith(
+                color: AppColors.primaryText(context),
+              ),
             ),
           ),
         ],
@@ -235,16 +239,22 @@ class InfoChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.primarySoft : Colors.white,
+          color: isActive
+              ? AppColors.activeChipBackground(context)
+              : AppColors.surface(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isActive ? AppColors.primary : AppColors.border,
+            color: isActive
+                ? AppColors.primary
+                : AppColors.borderColor(context),
           ),
         ),
         child: Text(
           label,
           style: AppTextStyles.caption.copyWith(
-            color: isActive ? AppColors.primary : AppColors.textMuted,
+            color: isActive
+                ? AppColors.primary
+                : AppColors.mutedText(context),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -263,13 +273,13 @@ class InfoTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.softSurface(context),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
         style: AppTextStyles.caption.copyWith(
-          color: AppColors.textMuted,
+          color: AppColors.mutedText(context),
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -294,11 +304,11 @@ class FeatureShortcutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.white,
+      color: AppColors.surface(context),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.borderColor(context)),
       ),
       child: InkWell(
         onTap: onTap,
@@ -352,9 +362,9 @@ class MetricTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F1E9),
+        color: AppColors.softSurface(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderColor(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,14 +396,18 @@ class ChatBubble extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: isChef ? Colors.white : AppColors.textPrimary,
+          color: isChef
+              ? AppColors.surface(context)
+              : AppColors.darkButton,
           borderRadius: BorderRadius.circular(18),
-          border: isChef ? Border.all(color: AppColors.border) : null,
+          border: isChef
+              ? Border.all(color: AppColors.borderColor(context))
+              : null,
         ),
         child: Text(
           text,
           style: AppTextStyles.body.copyWith(
-            color: isChef ? AppColors.textPrimary : Colors.white,
+            color: isChef ? AppColors.primaryText(context) : Colors.white,
           ),
         ),
       ),
@@ -418,11 +432,11 @@ class ProfileMenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.white,
+      color: AppColors.surface(context),
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: AppColors.border),
+        side: BorderSide(color: AppColors.borderColor(context)),
       ),
       child: ListTile(
         onTap: onTap,
@@ -430,17 +444,20 @@ class ProfileMenuTile extends StatelessWidget {
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: const Color(0xFFF5F1E9),
+            color: AppColors.softSurface(context),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(icon, color: AppColors.textPrimary),
+          child: Icon(icon, color: AppColors.primaryText(context)),
         ),
         title: Text(
           title,
           style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
         ),
         subtitle: Text(subtitle, style: AppTextStyles.caption),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: Icon(
+          Icons.chevron_right,
+          color: AppColors.mutedText(context),
+        ),
       ),
     );
   }
@@ -485,13 +502,17 @@ class AppBackButton extends StatelessWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderColor(context)),
       ),
       child: IconButton(
         onPressed: () => Navigator.pop(context),
-        icon: const Icon(Icons.arrow_back_ios_new, size: 16),
+        icon: Icon(
+          Icons.arrow_back_ios_new,
+          size: 16,
+          color: AppColors.primaryText(context),
+        ),
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
       ),

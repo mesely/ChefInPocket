@@ -24,7 +24,9 @@ class _CustomizeIngredientsScreenState
 
   String get _slug {
     final arguments = ModalRoute.of(context)?.settings.arguments;
-    return arguments is String && arguments.isNotEmpty ? arguments : 'menemen';
+    return arguments is String && arguments.isNotEmpty
+        ? arguments
+        : 'feta-menemen';
   }
 
   @override

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/app_models.dart';
+import '../providers/app_data_provider.dart';
 import '../routes/app_routes.dart';
 import '../services/api_service.dart';
 import '../utils/app_colors.dart';
@@ -16,18 +18,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late Future<_HomeData> _homeDataFuture;
   final _searchController = TextEditingController();
-  bool _isSearching = false;
-  List<Recipe> _allRecipes = const [];
   List<Recipe> _suggestions = const [];
   bool _showSuggestions = false;
 
   @override
   void initState() {
     super.initState();
-    _homeDataFuture = _loadHomeData();
-    _loadAllRecipes();
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -38,19 +35,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  Future<void> _loadAllRecipes() async {
-    try {
-      final recipes = await ApiService.instance.fetchRecipes();
-      if (mounted) {
-        setState(() {
-          _allRecipes = recipes;
-        });
-      }
-    } catch (_) {}
-  }
-
   void _onSearchChanged() {
-    final query = _searchController.text.trim().toLowerCase();
+    final query = _searchController.text.trim();
     if (query.length < 2) {
       setState(() {
         _suggestions = const [];
@@ -58,8 +44,10 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       return;
     }
-    final matches = _allRecipes
-        .where((r) => '${r.title} ${r.subtitle}'.toLowerCase().contains(query))
+
+    final matches = context
+        .read<AppDataProvider>()
+        .searchRecipes(query)
         .take(5)
         .toList();
     setState(() {
@@ -68,101 +56,59 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<_HomeData> _loadHomeData() async {
-    final results = await Future.wait([
-      ApiService.instance.fetchContent(),
-      ApiService.instance.fetchRecipes(),
-      ApiService.instance.fetchProfile(),
-    ]);
-
-    final recipes = results[1] as List<Recipe>;
-    final daysSinceEpoch = DateTime.now().millisecondsSinceEpoch ~/ 86400000;
-    final todayIndex = recipes.isEmpty ? 0 : daysSinceEpoch % recipes.length;
-
-    return _HomeData(
-      content: results[0] as AppContent,
-      featuredRecipe: recipes.isEmpty ? null : recipes[todayIndex],
-      profile: results[2] as UserProfile,
-    );
+  void _openRecipe(Recipe recipe) {
+    Navigator.pushNamed(context, AppRoutes.recipeDetail, arguments: recipe.id);
   }
 
-  Future<void> _searchRecipe(String query) async {
-    final normalizedQuery = query.trim().toLowerCase();
-    if (normalizedQuery.isEmpty || _isSearching) return;
-
+  void _submitSearch(String value) {
+    final matches = context.read<AppDataProvider>().searchRecipes(value);
     setState(() {
-      _isSearching = true;
       _showSuggestions = false;
     });
 
-    try {
-      final recipes = _allRecipes.isNotEmpty
-          ? _allRecipes
-          : await ApiService.instance.fetchRecipes();
-
-      final recipe = recipes.cast<Recipe?>().firstWhere(
-        (item) =>
-            item != null &&
-            '${item.title} ${item.subtitle}'.toLowerCase().contains(
-              normalizedQuery,
-            ),
-        orElse: () => null,
-      );
-
-      if (!mounted) return;
-
-      if (recipe == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No recipe found for "$query".')),
-        );
-        return;
-      }
-
-      Navigator.pushNamed(
-        context,
-        AppRoutes.recipeDetail,
-        arguments: recipe.id,
-      );
-    } on ApiException catch (error) {
-      if (!mounted) return;
+    if (matches.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSearching = false;
-        });
-      }
+      ).showSnackBar(SnackBar(content: Text('No recipe found for "$value".')));
+      return;
     }
+
+    _openRecipe(matches.first);
   }
 
   @override
   Widget build(BuildContext context) {
+    final dataProvider = context.watch<AppDataProvider>();
+
     return ChefPage(
       currentRoute: AppRoutes.home,
       showBottomNav: true,
-      child: FutureBuilder<_HomeData>(
-        future: _homeDataFuture,
+      child: StreamBuilder<UserProfile?>(
+        stream: ApiService.instance.watchProfile(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (dataProvider.isLoading || dataProvider.content == null) {
             return const SizedBox(
               height: 320,
               child: Center(child: CircularProgressIndicator()),
             );
           }
 
-          if (snapshot.hasError || !snapshot.hasData) {
+          if (dataProvider.errorMessage != null) {
             return _ErrorState(
               message: 'Home data could not be loaded.',
-              onRetry: () => setState(() {
-                _homeDataFuture = _loadHomeData();
-              }),
+              onRetry: () => context.read<AppDataProvider>().refresh(),
             );
           }
 
-          final data = snapshot.data!;
-          final firstName = data.profile.fullName.split(' ').first;
+          final profile = snapshot.data;
+          final content = dataProvider.content!;
+          final recipes = dataProvider.recipes;
+          final daysSinceEpoch =
+              DateTime.now().millisecondsSinceEpoch ~/ 86400000;
+          final featuredRecipe = recipes.isEmpty
+              ? null
+              : recipes[daysSinceEpoch % recipes.length];
+          final firstName = profile?.fullName.split(' ').first ?? 'Chef';
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,12 +118,9 @@ class _HomeScreenState extends State<HomeScreen> {
               Text('What are you cooking today?', style: AppTextStyles.display),
               const SizedBox(height: AppSpacing.md),
               AppSearchField(
-                hint: _isSearching ? 'Searching...' : 'Search recipes...',
+                hint: 'Search recipes...',
                 controller: _searchController,
-                onSubmitted: (v) {
-                  setState(() => _showSuggestions = false);
-                  _searchRecipe(v);
-                },
+                onSubmitted: _submitSearch,
               ),
               if (_showSuggestions) ...[
                 const SizedBox(height: 4),
@@ -185,12 +128,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   suggestions: _suggestions,
                   onTap: (recipe) {
                     _searchController.text = recipe.title;
-                    setState(() => _showSuggestions = false);
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.recipeDetail,
-                      arguments: recipe.id,
-                    );
+                    setState(() {
+                      _showSuggestions = false;
+                    });
+                    _openRecipe(recipe);
                   },
                 ),
               ],
@@ -199,13 +140,13 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: AppSpacing.sm),
               const _CuisineGrid(),
               const SizedBox(height: AppSpacing.lg),
-              if (data.featuredRecipe != null) ...[
-                _FeaturedRecipeCard(recipe: data.featuredRecipe!),
+              if (featuredRecipe != null) ...[
+                _FeaturedRecipeCard(recipe: featuredRecipe),
                 const SizedBox(height: AppSpacing.lg),
               ],
               const AppSectionHeader(label: 'Quick Access'),
               const SizedBox(height: AppSpacing.sm),
-              ...data.content.quickAccess
+              ...content.quickAccess
                   .where((item) => item.routeName != AppRoutes.browseCuisine)
                   .map(
                     (item) => Padding(
@@ -237,9 +178,9 @@ class _SearchSuggestions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.borderColor(context)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -257,10 +198,10 @@ class _SearchSuggestions extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.search,
                     size: 16,
-                    color: AppColors.textMuted,
+                    color: AppColors.mutedText(context),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -286,74 +227,66 @@ class _CuisineGrid extends StatelessWidget {
   const _CuisineGrid();
 
   static const _items = [
-    _CuisineItem('🇹🇷', 'Turkish'),
-    _CuisineItem('🍝', 'Italian'),
-    _CuisineItem('🥐', 'French'),
-    _CuisineItem('🥗', 'Healthy'),
-    _CuisineItem('💪', 'Athlete'),
-    _CuisineItem('🌍', 'Other'),
+    ('🇹🇷', 'Turkish'),
+    ('🍝', 'Italian'),
+    ('🥐', 'French'),
+    ('🥗', 'Healthy'),
+    ('💪', 'Athlete'),
+    ('🌍', 'Other'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      itemCount: _items.length,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 2.2,
-      ),
-      itemBuilder: (context, index) {
-        final item = _items[index];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final count = constraints.maxWidth > 420 ? 3 : 2;
 
-        return GestureDetector(
-          onTap: () {
-            if (item.title == 'Other') {
-              Navigator.pushNamed(context, AppRoutes.browseCuisine);
-            } else {
-              Navigator.pushNamed(
+        return GridView.builder(
+          itemCount: _items.length,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: count,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 1.62,
+          ),
+          itemBuilder: (context, index) {
+            final item = _items[index];
+            return InkWell(
+              onTap: () => Navigator.pushNamed(
                 context,
                 AppRoutes.recipeResults,
-                arguments: {'cuisine': item.title},
-              );
-            }
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(item.emoji, style: const TextStyle(fontSize: 16)),
-                const SizedBox(width: 6),
-                Text(
-                  item.title,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
+                arguments: {'cuisine': item.$2},
+              ),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface(context),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.borderColor(context)),
                 ),
-              ],
-            ),
-          ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(item.$1, style: const TextStyle(fontSize: 22)),
+                    const SizedBox(height: 6),
+                    Text(
+                      item.$2,
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
   }
-}
-
-class _CuisineItem {
-  const _CuisineItem(this.emoji, this.title);
-
-  final String emoji;
-  final String title;
 }
 
 class _FeaturedRecipeCard extends StatelessWidget {
@@ -363,37 +296,63 @@ class _FeaturedRecipeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
+    return Card(
+      color: AppColors.surface(context),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(28),
-        image: DecorationImage(
-          image: NetworkImage(recipe.imageUrl),
-          fit: BoxFit.cover,
-        ),
+        side: BorderSide(color: AppColors.borderColor(context)),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(
+          context,
+          AppRoutes.recipeDetail,
+          arguments: recipe.id,
         ),
+        borderRadius: BorderRadius.circular(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Today's pick", style: AppTextStyles.sectionLabel),
-            const SizedBox(height: AppSpacing.xs),
-            Text(recipe.title, style: AppTextStyles.title),
-            const SizedBox(height: AppSpacing.xs),
-            Text(recipe.description, style: AppTextStyles.caption),
-            const SizedBox(height: AppSpacing.md),
-            ElevatedButton(
-              onPressed: () => Navigator.pushNamed(
-                context,
-                AppRoutes.recipeDetail,
-                arguments: recipe.id,
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
               ),
-              child: const Text('Open Recipe'),
+              child: AspectRatio(
+                aspectRatio: 16 / 10,
+                child: Image.network(
+                  recipe.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      'assets/images/recipe-hero.jpg',
+                      fit: BoxFit.cover,
+                    );
+                  },
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Featured for today', style: AppTextStyles.caption),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(recipe.title, style: AppTextStyles.title),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(recipe.description, style: AppTextStyles.subtitle),
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      InfoTag(label: recipe.duration),
+                      InfoTag(label: '${recipe.servings} servings'),
+                      ...recipe.tags.take(2).map((tag) => InfoTag(label: tag)),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -410,26 +369,12 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        children: [
-          Text(message, style: AppTextStyles.body),
-          const SizedBox(height: AppSpacing.sm),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
-      ),
+    return Column(
+      children: [
+        Text(message, style: AppTextStyles.body),
+        const SizedBox(height: AppSpacing.sm),
+        OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+      ],
     );
   }
-}
-
-class _HomeData {
-  const _HomeData({
-    required this.content,
-    required this.featuredRecipe,
-    required this.profile,
-  });
-
-  final AppContent content;
-  final Recipe? featuredRecipe;
-  final UserProfile profile;
 }

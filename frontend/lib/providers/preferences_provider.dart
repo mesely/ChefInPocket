@@ -6,44 +6,33 @@ class PreferencesProvider extends ChangeNotifier {
     _load();
   }
 
-  static const _keyTheme = 'theme_mode';
-  static const _keyLastTab = 'last_tab';
+  static const _themeModeKey = 'theme_mode';
 
   ThemeMode _themeMode = ThemeMode.light;
-  int _lastTab = 0;
+  bool _isReady = false;
 
   ThemeMode get themeMode => _themeMode;
-  int get lastTab => _lastTab;
-  bool get isDark => _themeMode == ThemeMode.dark;
+  bool get isReady => _isReady;
+  bool get isDarkMode => _themeMode == ThemeMode.dark;
 
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_keyTheme);
-    if (saved == 'dark') {
+    final preferences = await SharedPreferences.getInstance();
+    final value = preferences.getString(_themeModeKey);
+
+    if (value == 'dark') {
       _themeMode = ThemeMode.dark;
     } else {
       _themeMode = ThemeMode.light;
     }
-    _lastTab = prefs.getInt(_keyLastTab) ?? 0;
+
+    _isReady = true;
     notifyListeners();
   }
 
-  Future<void> setThemeMode(ThemeMode mode) async {
-    _themeMode = mode;
+  Future<void> setDarkMode(bool enabled) async {
+    final preferences = await SharedPreferences.getInstance();
+    _themeMode = enabled ? ThemeMode.dark : ThemeMode.light;
+    await preferences.setString(_themeModeKey, enabled ? 'dark' : 'light');
     notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyTheme, mode == ThemeMode.dark ? 'dark' : 'light');
-  }
-
-  Future<void> toggleTheme() async {
-    await setThemeMode(
-      _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark,
-    );
-  }
-
-  Future<void> setLastTab(int index) async {
-    _lastTab = index;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_keyLastTab, index);
   }
 }

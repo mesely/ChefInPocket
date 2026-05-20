@@ -1,114 +1,95 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
-import '../services/firestore_service.dart';
-
-enum AuthStatus { unknown, authenticated, unauthenticated }
+import '../services/api_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   AuthProvider() {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    _user = currentUser;
-    _status = currentUser == null
-        ? AuthStatus.unknown
-        : AuthStatus.authenticated;
-
-    _subscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+    _subscription = ApiService.instance.authStateChanges().listen((user) {
       _user = user;
-      _status = user != null
-          ? AuthStatus.authenticated
-          : AuthStatus.unauthenticated;
+      _isLoading = false;
+      _errorMessage = null;
       notifyListeners();
+
+      if (user != null) {
+        _syncSignedInUser();
+      }
     });
   }
 
   StreamSubscription<User?>? _subscription;
   User? _user;
-  AuthStatus _status = AuthStatus.unknown;
-  String? _error;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   User? get user => _user;
-  AuthStatus get status => _status;
-  String? get error => _error;
-  bool get isLoggedIn => _status == AuthStatus.authenticated;
+  bool get isLoading => _isLoading;
+  bool get isAuthenticated => _user != null;
+  String? get errorMessage => _errorMessage;
 
-  String get displayName =>
-      _user?.displayName ?? _user?.email?.split('@').first ?? 'Chef';
-
-  String get email => _user?.email ?? '';
-
-  Future<bool> login(String email, String password) async {
-    _error = null;
+  Future<void> login(String email, String password) async {
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
+
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email.trim(),
-        password: password,
-      );
-      return true;
-    } on FirebaseAuthException catch (e) {
-      _error = _mapError(e.code);
+      await ApiService.instance.login(email, password);
+    } on ApiException catch (error) {
+      _errorMessage = error.message;
+      _isLoading = false;
       notifyListeners();
-      return false;
-    } catch (_) {
-      _error = 'Login failed. Please try again.';
-      notifyListeners();
-      return false;
+      rethrow;
     }
   }
 
-  Future<bool> register(String fullName, String email, String password) async {
-    _error = null;
+  Future<void> register({
+    required String fullName,
+    required String email,
+    required String password,
+    required String gender,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
+
     try {
-      final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email.trim(),
+      await ApiService.instance.register(
+        fullName: fullName,
+        email: email,
         password: password,
+        gender: gender,
       );
-      await cred.user?.updateDisplayName(fullName.trim());
-      await FirestoreService.instance.saveUserProfile(
-        uid: cred.user!.uid,
-        fullName: fullName.trim(),
-        email: email.trim().toLowerCase(),
-      );
-      return true;
-    } on FirebaseAuthException catch (e) {
-      _error = _mapError(e.code);
+    } on ApiException catch (error) {
+      _errorMessage = error.message;
+      _isLoading = false;
       notifyListeners();
-      return false;
-    } catch (_) {
-      _error = 'Registration failed. Please try again.';
-      notifyListeners();
-      return false;
+      rethrow;
     }
   }
 
   Future<void> logout() async {
-    await FirebaseAuth.instance.signOut();
+    _isLoading = true;
+    notifyListeners();
+    await ApiService.instance.logout();
   }
 
-  String _mapError(String code) {
-    switch (code) {
-      case 'user-not-found':
-        return 'No account found with this email.';
-      case 'wrong-password':
-      case 'invalid-credential':
-        return 'Incorrect email or password.';
-      case 'email-already-in-use':
-        return 'An account with this email already exists.';
-      case 'weak-password':
-        return 'Password must be at least 6 characters.';
-      case 'invalid-email':
-        return 'Please enter a valid email address.';
-      case 'network-request-failed':
-        return 'Network error. Check your connection.';
-      case 'too-many-requests':
-        return 'Too many attempts. Try again later.';
-      default:
-        return 'Something went wrong. Please try again.';
+  Future<void> _syncSignedInUser() async {
+    try {
+      await ApiService.instance.ensureCurrentUserProfile();
+      await ApiService.instance.ensureSeedData();
+      _errorMessage = null;
+    } on ApiException catch (error) {
+      _errorMessage = error.message;
     }
+
+    notifyListeners();
+  }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
   }
 
   @override

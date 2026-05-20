@@ -20,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+  String _selectedGender = 'prefer_not_to_say';
   bool _isSubmitting = false;
 
   @override
@@ -32,27 +33,67 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _isSubmitting) return;
-
-    setState(() => _isSubmitting = true);
-
-    final auth = context.read<AuthProvider>();
-    final ok = await auth.register(
-      _nameController.text.trim(),
-      _emailController.text.trim(),
-      _passwordController.text,
-    );
-
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-
-    if (ok) {
-      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.error ?? 'Registration failed.')),
-      );
+    if (!_formKey.currentState!.validate() || _isSubmitting) {
+      return;
     }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      await context.read<AuthProvider>().register(
+        fullName: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        gender: _selectedGender,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      showSuccessDialog(
+        context: context,
+        title: 'Account Created',
+        message: 'Your account is now stored in Firebase.',
+        onPressed: () {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.home,
+            (route) => false,
+          );
+        },
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Email is required';
+    }
+
+    if (!value.contains('@') || !value.contains('.')) {
+      return 'Enter a valid email';
+    }
+
+    return null;
   }
 
   @override
@@ -62,8 +103,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: AppSpacing.sm),
-          _AuthToggle(
-            active: 'register',
+          _AuthSwitch(
+            activeLabel: 'Register',
             onLoginTap: () =>
                 Navigator.pushReplacementNamed(context, AppRoutes.login),
           ),
@@ -84,14 +125,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: AppSpacing.xs),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(hintText: 'Selman Yılmaz'),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
+                  decoration: const InputDecoration(hintText: 'Jamie Parker'),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Full name is required';
                     }
-                    if (v.trim().length < 2) {
-                      return 'Enter at least 2 characters';
+
+                    if (value.trim().length < 3) {
+                      return 'Enter at least 3 characters';
                     }
+
                     return null;
                   },
                 ),
@@ -104,15 +147,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: const InputDecoration(
                     hintText: 'you@example.com',
                   ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Email is required';
-                    }
-                    if (!v.contains('@') || !v.contains('.')) {
-                      return 'Enter a valid email';
-                    }
-                    return null;
-                  },
+                  validator: _validateEmail,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text('GENDER', style: AppTextStyles.sectionLabel),
+                const SizedBox(height: AppSpacing.xs),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      [
+                        ('female', 'Female'),
+                        ('male', 'Male'),
+                        ('prefer_not_to_say', 'Prefer not to say'),
+                      ].map((option) {
+                        return InfoChip(
+                          label: option.$2,
+                          isActive: _selectedGender == option.$1,
+                          onTap: () {
+                            setState(() {
+                              _selectedGender = option.$1;
+                            });
+                          },
+                        );
+                      }).toList(),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 Text('PASSWORD', style: AppTextStyles.sectionLabel),
@@ -123,13 +181,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: const InputDecoration(
                     hintText: 'Create a password',
                   ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) {
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
                       return 'Password is required';
                     }
-                    if (v.length < 6) {
+
+                    if (value.length < 6) {
                       return 'Use at least 6 characters';
                     }
+
                     return null;
                   },
                 ),
@@ -142,13 +202,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: const InputDecoration(
                     hintText: 'Repeat your password',
                   ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) {
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
                       return 'Please confirm your password';
                     }
-                    if (v != _passwordController.text) {
+
+                    if (value != _passwordController.text) {
                       return 'Passwords do not match';
                     }
+
                     return null;
                   },
                   onFieldSubmitted: (_) => _submit(),
@@ -161,33 +223,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
             onPressed: _isSubmitting ? null : _submit,
             child: Text(_isSubmitting ? 'Creating...' : 'Create Account'),
           ),
-          const SizedBox(height: AppSpacing.md),
-          Center(
-            child: GestureDetector(
-              onTap: () =>
-                  Navigator.pushReplacementNamed(context, AppRoutes.login),
-              child: Text(
-                'Already have an account? Log in',
-                style: AppTextStyles.caption.copyWith(
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 }
 
-class _AuthToggle extends StatelessWidget {
-  const _AuthToggle({required this.active, required this.onLoginTap});
+class _AuthSwitch extends StatelessWidget {
+  const _AuthSwitch({required this.activeLabel, required this.onLoginTap});
 
-  final String active;
+  final String activeLabel;
   final VoidCallback onLoginTap;
 
   @override
   Widget build(BuildContext context) {
+    final registerActive = activeLabel == 'Register';
+
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -203,9 +254,9 @@ class _AuthToggle extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: active == 'login'
-                      ? const Color(0xFFFFF4D8)
-                      : Colors.transparent,
+                  color: registerActive
+                      ? Colors.transparent
+                      : const Color(0xFFFFF4D8),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -222,7 +273,7 @@ class _AuthToggle extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: active == 'register'
+                color: registerActive
                     ? const Color(0xFFFFF4D8)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(999),

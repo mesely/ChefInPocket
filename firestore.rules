@@ -1,56 +1,52 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function ownsPath(uid) {
-      return isSignedIn() && request.auth.uid == uid;
+    function isOwner() {
+      return isSignedIn() && resource.data.createdBy == request.auth.uid;
     }
 
-    function hasOwnerAndTimestamp() {
-      return request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.keys().hasAll(['id', 'createdBy', 'createdAt']);
+    function isCreatingOwnDoc() {
+      return isSignedIn() && request.resource.data.createdBy == request.auth.uid;
     }
 
-    // Users: only the owner can read/write their own profile
-    match /users/{uid} {
-      allow read, delete: if ownsPath(uid);
-      allow create, update: if ownsPath(uid)
-        && request.resource.data.id == uid
-        && request.resource.data.uid == uid
-        && hasOwnerAndTimestamp();
-    }
-
-    // Recipes: anyone authenticated can read; only creator can write/delete
     match /recipes/{recipeId} {
-      allow read: if isSignedIn();
+      allow read: if true;
+      allow create: if isCreatingOwnDoc();
+      allow update, delete: if isOwner();
+    }
+
+    match /community_posts/{postId} {
+      allow read: if true;
+      allow create: if isCreatingOwnDoc();
+      allow update, delete: if isOwner();
+    }
+
+    match /users/{userId} {
+      allow read, update, delete: if isSignedIn() && request.auth.uid == userId;
       allow create: if isSignedIn()
-        && request.resource.data.id == recipeId
-        && request.resource.data.keys().hasAll(['title', 'createdBy', 'createdAt'])
-        && hasOwnerAndTimestamp();
-      allow update: if isSignedIn()
-        && resource.data.createdBy == request.auth.uid
+        && request.auth.uid == userId
         && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.id == recipeId;
-      allow delete: if isSignedIn() && resource.data.createdBy == request.auth.uid;
+        && request.resource.data.uid == request.auth.uid;
     }
 
-    // Saved recipes: per-user subcollection, only owner can read/write
-    match /savedRecipes/{uid}/items/{docId} {
-      allow read, delete: if ownsPath(uid);
-      allow create, update: if ownsPath(uid)
-        && request.resource.data.id == docId
-        && hasOwnerAndTimestamp();
+    match /saved_recipes/{savedId} {
+      allow read, update, delete: if isOwner();
+      allow create: if isCreatingOwnDoc();
     }
 
-    // Grocery items: per-user subcollection, only owner can read/write
-    match /groceryItems/{uid}/items/{docId} {
-      allow read, delete: if ownsPath(uid);
-      allow create, update: if ownsPath(uid)
-        && request.resource.data.id == docId
-        && hasOwnerAndTimestamp();
+    match /grocery_items/{itemId} {
+      allow read, update, delete: if isOwner();
+      allow create: if isCreatingOwnDoc();
+    }
+
+    match /assistant_messages/{messageId} {
+      allow read, update, delete: if isOwner();
+      allow create: if isCreatingOwnDoc();
     }
   }
 }
